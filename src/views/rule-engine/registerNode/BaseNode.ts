@@ -30,7 +30,7 @@ export default function registerBaseNode(lf: any) {
           height: safeHeight,
           rx: 10,
           ry: 10,
-          fill: properties.type === 'start' ? '#A0CFFF' : '#FDF6EC',
+          fill: '#A0CFFF', // 统一使用开始节点的背景色
         });
       }
       
@@ -182,28 +182,72 @@ export default function registerBaseNode(lf: any) {
           });
         });
       }
+      
+      // 获取节点样式
+      getNodeStyle() {
+        const { properties } = this;
+        
+        // 优先使用properties中的style属性
+        if (properties.style) {
+          return {
+            fill: properties.style.fill || '#A0CFFF',
+            stroke: properties.frontend_status === '0' ? '#FF0000' : (properties.style.stroke || '#E6A23C'),
+            strokeWidth: properties.style.strokeWidth || 2,
+            radius: properties.style.radius || 10,
+          };
+        }
+        
+        // 统一使用开始节点的样式
+        return {
+          fill: '#A0CFFF', // 统一使用开始节点的浅蓝色背景
+          stroke: properties.frontend_status === '0' ? '#FF0000' : '#E6A23C',
+          strokeWidth: 2,
+          radius: 10, // 圆角半径
+        };
+      }
     }
     
     class CustomBaseNodeModel extends RectNodeModel {
       constructor(data: any, graphModel: any) {
         super(data, graphModel);
-        // 设置节点尺寸
+        this.type = 'base-node';
         this.width = 160;
         this.height = 60;
-        
-        // 禁用大小调整
         this.resizable = false;
+        
+        // 确保节点有默认属性
+        this.properties = {
+          name: '基础节点',
+          desc: '基础节点',
+          frontend_status: '1',
+          // 添加默认样式
+          style: {
+            fill: '#A0CFFF',
+            stroke: '#E6A23C',
+            strokeWidth: 2,
+            radius: 10
+          },
+          ...this.properties,
+        };
       }
       
       // 获取节点样式
       getNodeStyle() {
         const { properties } = this;
         
-        // 根据节点类型设置不同的填充色
-        const fillColor = this.type === 'start' ? '#A0CFFF' : '#FDF6EC';
+        // 优先使用properties中的style属性
+        if (properties.style) {
+          return {
+            fill: properties.style.fill || '#A0CFFF',
+            stroke: properties.frontend_status === '0' ? '#FF0000' : (properties.style.stroke || '#E6A23C'),
+            strokeWidth: properties.style.strokeWidth || 2,
+            radius: properties.style.radius || 10,
+          };
+        }
         
+        // 统一使用开始节点的样式
         return {
-          fill: fillColor,
+          fill: '#A0CFFF', // 统一使用开始节点的浅蓝色背景
           stroke: properties.frontend_status === '0' ? '#FF0000' : '#E6A23C',
           strokeWidth: 2,
           radius: 10, // 圆角半径

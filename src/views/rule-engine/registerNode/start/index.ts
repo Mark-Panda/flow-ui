@@ -39,6 +39,13 @@ export default function registerStart(lf: any) {
           name: '开始',
           desc: '流程开始节点',
           frontend_status: '1',
+          // 添加默认样式
+          style: {
+            fill: '#A0CFFF',
+            stroke: '#E6A23C',
+            strokeWidth: 2,
+            radius: 10
+          },
           ...this.properties,
         };
       }

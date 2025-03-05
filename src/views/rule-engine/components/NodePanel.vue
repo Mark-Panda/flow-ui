@@ -127,7 +127,14 @@ const getDefaultProperties = (type: string, label: string) => {
   const commonProps = {
     name: label,
     desc: `${label}节点`,
-    frontend_status: '1'
+    frontend_status: '1',
+    // 添加统一的样式属性
+    style: {
+      fill: '#A0CFFF',
+      stroke: '#E6A23C',
+      strokeWidth: 2,
+      radius: 10
+    }
   };
   
   // 根据节点类型添加特定属性

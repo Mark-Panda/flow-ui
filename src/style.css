@@ -162,16 +162,16 @@ button:focus-visible {
 .lf-node-startParallel,
 .lf-node-endParallel {
   cursor: pointer !important;
-  stroke: #000000 !important;
-  stroke-width: 1px !important;
+  stroke: #E6A23C !important; /* 统一使用橙色边框 */
+  stroke-width: 2px !important;
   filter: none !important;
 }
 
 /* 确保节点边框始终可见 */
 .lf-node rect {
-  stroke: #000000 !important;
-  stroke-width: 1px !important;
-  fill: #FFFFFF !important;
+  stroke: #E6A23C !important; /* 统一使用橙色边框 */
+  stroke-width: 2px !important;
+  fill: #A0CFFF !important; /* 统一使用浅蓝色背景 */
 }
 
 /* 增强连接点的可见性 */

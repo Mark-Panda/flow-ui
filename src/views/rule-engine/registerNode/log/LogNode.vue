@@ -35,8 +35,8 @@ defineProps({
   width: 140px;
   height: 40px;
   line-height: 40px;
-  background-color: #FFDBB9; /* 浅橙色背景 */
-  border: 2px solid #67C23A; /* 绿色边框 */
+  background-color: #A0CFFF; /* 浅蓝色背景，与开始节点一致 */
+  border: 2px solid #E6A23C; /* 橙色边框，与开始节点一致 */
   border-radius: 10px; /* 更大的圆角 */
   text-align: center;
   cursor: pointer;

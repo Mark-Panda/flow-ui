@@ -29,8 +29,10 @@ export default function registerLog(lf: any) {
       constructor(data: any, graphModel: any) {
         super(data, graphModel);
         this.type = 'log';
+        // 设置固定大小
         this.width = 120;
         this.height = 60;
+        // 禁用大小调整
         this.resizable = false;
         
         // 节点的默认属性
@@ -41,6 +43,13 @@ export default function registerLog(lf: any) {
           frontend_status: '1',
           logContent: '',
           logLevel: 'info',
+          // 添加默认样式
+          style: {
+            fill: '#A0CFFF',
+            stroke: '#E6A23C',
+            strokeWidth: 2,
+            radius: 10
+          },
           ...this.properties,
         };
       }
@@ -57,13 +66,14 @@ export default function registerLog(lf: any) {
         });
       }
       
+      // 只保留左右连接点，与开始节点保持一致
       getDefaultAnchor() {
         const { id, x, y, width, height } = this;
         
         // 确保x和y是有效数值
         const safeX = isNaN(x) ? 0 : x;
         const safeY = isNaN(y) ? 0 : y;
-        const safeWidth = isNaN(width) ? 160 : width;
+        const safeWidth = isNaN(width) ? 120 : width;
         const safeHeight = isNaN(height) ? 60 : height;
         
         return [
@@ -83,26 +93,6 @@ export default function registerLog(lf: any) {
             y: safeY,
             id: `${id}_left`,
             type: 'left',
-            edgeAddable: true,
-            nodeAddable: false,
-            className: 'node-anchor'
-          },
-          // 顶部连接点
-          {
-            x: safeX,
-            y: safeY - safeHeight / 2,
-            id: `${id}_top`,
-            type: 'top',
-            edgeAddable: true,
-            nodeAddable: false,
-            className: 'node-anchor'
-          },
-          // 底部连接点
-          {
-            x: safeX,
-            y: safeY + safeHeight / 2,
-            id: `${id}_bottom`,
-            type: 'bottom',
             edgeAddable: true,
             nodeAddable: false,
             className: 'node-anchor'

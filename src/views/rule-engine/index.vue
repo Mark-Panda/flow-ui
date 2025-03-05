@@ -720,6 +720,13 @@ const setupDragEvents = (container: HTMLElement, lfInstance: any) => {
           name: nodeLabel,
           desc: `${nodeLabel}节点`,
           frontend_status: '1',
+          // 确保应用统一的样式
+          style: {
+            fill: '#A0CFFF',
+            stroke: '#E6A23C',
+            strokeWidth: 2,
+            radius: 10
+          },
           ...nodeData.properties // 合并原始属性
         }
       };
@@ -820,6 +827,13 @@ const tryBackupAddMethod = (lfInstance: any, nodeData: any, x: number, y: number
         name: nodeLabel,
         desc: `${nodeLabel}节点`,
         frontend_status: '1',
+        // 确保应用统一的样式
+        style: {
+          fill: '#A0CFFF',
+          stroke: '#E6A23C',
+          strokeWidth: 2,
+          radius: 10
+        },
         ...nodeData.properties // 合并原始属性
       }
     };
