@@ -150,47 +150,124 @@ button:focus-visible {
 }
 
 /* 自定义LogicFlow节点样式 */
-.lf-node-start {
-  cursor: pointer;
+.lf-node {
+  cursor: pointer !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
 }
 
-.lf-node-log {
-  cursor: pointer;
-}
-
-.lf-node-assignment {
-  cursor: pointer;
-}
-
-.lf-node-decision {
-  cursor: pointer;
-}
-
-.lf-node-startParallel {
-  cursor: pointer;
-}
-
+.lf-node-start,
+.lf-node-log,
+.lf-node-assignment,
+.lf-node-decision,
+.lf-node-startParallel,
 .lf-node-endParallel {
-  cursor: pointer;
+  cursor: pointer !important;
+  stroke: #000000 !important;
+  stroke-width: 1px !important;
+  filter: none !important;
 }
 
-/* LogicFlow节点选中状态（移除轮廓线，改用其他不那么明显的方式表示选中状态） */
+/* 确保节点边框始终可见 */
+.lf-node rect {
+  stroke: #000000 !important;
+  stroke-width: 1px !important;
+  fill: #FFFFFF !important;
+}
+
+/* 增强连接点的可见性 */
+.lf-anchor {
+  r: 4px !important;
+  stroke: #409EFF !important;
+  stroke-width: 1px !important;
+  fill: #FFFFFF !important;
+}
+
+.lf-anchor:hover {
+  r: 6px !important;
+  stroke: #409EFF !important;
+  fill: rgba(64, 158, 255, 0.2) !important;
+}
+
+/* LogicFlow节点选中状态 */
 .lf-node-selected {
   outline: none !important;
-  filter: brightness(1.05);
-  box-shadow: none !important;
+  filter: brightness(1.05) !important;
 }
 
-/* 自定义选中样式，更加微妙的效果 */
-.lf-node-selected .node-anchor {
-  fill: rgba(64, 158, 255, 0.1) !important;
-  stroke: #409eff !important;
+/* 微调选中节点的样式 */
+.lf-node-selected rect {
+  stroke: #409EFF !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: none !important;
 }
 
 /* 微调选中节点连接点的样式 */
 .lf-node-selected .lf-anchor {
-  fill: rgba(24, 144, 255, 0.2);
-  stroke: rgba(24, 144, 255, 0.5);
+  fill: rgba(64, 158, 255, 0.2) !important;
+  stroke: #409EFF !important;
+  r: 5px !important;
+}
+
+/* 连线样式 */
+.lf-edge {
+  stroke-width: 2px !important;
+}
+
+.lf-edge-default {
+  stroke: #1890FF !important;
+}
+
+.lf-edge-success {
+  stroke: #52C41A !important;
+}
+
+.lf-edge-fail {
+  stroke: #F5222D !important;
+}
+
+/* 强制设置文本样式 */
+.lf-node-text {
+  fill: #333333 !important;
+  font-size: 14px !important;
+  pointer-events: none !important;
+}
+
+/* LogicFlow相关样式修复 */
+.lf-container {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  touch-action: none !important; /* 防止触摸设备上的滚动问题 */
+  overflow: hidden !important;
+}
+
+.lf-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  user-select: none !important;
+}
+
+/* 确保画布网格可见 */
+.lf-grid {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  pointer-events: none !important;
+}
+
+/* 确保外部容器样式正确 */
+#LF-view {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 600px !important;
+  min-height: 400px !important;
+  position: relative !important;
+  overflow: hidden !important;
 }
 
 /* 覆盖Element Plus样式 */
@@ -220,22 +297,6 @@ button:focus-visible {
   right: 10px;
   bottom: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* 连线样式 */
-.lf-edge-default {
-  stroke: #1890ff;
-  stroke-width: 2px;
-}
-
-.lf-edge-success {
-  stroke: #52c41a;
-  stroke-width: 2px;
-}
-
-.lf-edge-fail {
-  stroke: #f5222d;
-  stroke-width: 2px;
 }
 
 /* 添加LogicFlow相关的全局样式 */
@@ -269,21 +330,152 @@ button:focus-visible {
 /* 修复节点样式 */
 .lf-node {
   cursor: pointer;
-  user-select: none;
+  stroke: #DCDFE6;
+  stroke-width: 1px;
+  fill: #FFFFFF;
+  transition: all 0.2s;
 }
 
+/* 普通边样式 */
 .lf-edge {
-  cursor: pointer;
+  stroke: #5d7092;
+  stroke-width: 2px;
 }
 
-/* 确保元素不会溢出容器 */
-.logic-flow-view {
-  position: relative;
-  flex: 1;
+/* 连接点样式 */
+.lf-anchor {
+  stroke: #C0C4CC;
+  stroke-width: 1px;
+  fill: white;
+  r: 4px;
+  cursor: crosshair;
+}
+
+/* 连接点悬浮状态 */
+.lf-anchor:hover {
+  stroke: #409EFF;
+  fill: rgba(64, 158, 255, 0.2);
+  r: 5px;
+}
+
+/* 禁用调整把手 */
+.lf-node-anchor,
+.lf-edge-adjust-point {
+  display: none !important;
+}
+
+/* 选中节点样式 */
+.lf-node-selected {
+  stroke: #409EFF !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: none !important;
+}
+
+/* 节点悬浮状态 */
+.lf-node:hover {
+  fill: #F5F7FA;
+}
+
+/* 节点内部样式 */
+.node-container {
   display: flex;
+  align-items: center;
+}
+
+/* 节点左侧图标容器 */
+.node-icon-container {
+  width: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  border-right: 1px solid #EBEEF5;
+}
+
+/* 节点右侧文本容器 */
+.node-text-container {
+  flex: 1;
+  padding-left: 10px;
+  white-space: nowrap;
   overflow: hidden;
-  height: calc(100vh - 60px);
-  touch-action: none;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  color: #333;
+}
+
+/* 禁用节点样式 */
+.node-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 选中节点的连接点样式 */
+.lf-node-selected .lf-anchor {
+  fill: rgba(64, 158, 255, 0.2);
+  stroke: #409EFF;
+  r: 5px;
+}
+
+/* 节点之间的连接线样式 */
+.lf-edge {
+  stroke: #5d7092;
+  stroke-width: 2px;
+}
+
+.lf-edge:hover {
+  stroke: #409EFF;
+  stroke-width: 2px;
+}
+
+/* 选中边的样式 */
+.lf-edge-selected {
+  stroke: #409EFF;
+  stroke-width: 2px;
+}
+
+/* 文本样式 */
+.lf-text {
+  fill: #333;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* 折线和贝塞尔曲线样式 */
+.lf-polyline-edge, .lf-line-edge, .lf-bezier-edge {
+  fill: none;
+}
+
+/* 修复连接问题 */
+.lf-edge-append {
+  cursor: crosshair;
+}
+
+/* 确保画布和节点容器正确显示 */
+.lf-container {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  position: relative;
+}
+
+.lf-canvas-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.lf-graph {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible !important;
+}
+
+/* 拖动时的样式 */
+.lf-dragging {
+  cursor: grabbing;
 }
 
 /* SVG图标样式修复 */
@@ -352,17 +544,16 @@ html, body, #app {
 
 /* 禁用连接点的拖动效果 */
 .lf-anchor {
-  cursor: crosshair !important;
-  stroke: transparent !important;
-  fill: transparent !important;
-  stroke-width: 1 !important;
+  stroke: #C0C4CC;
+  stroke-width: 1px;
+  fill: white;
+  r: 4px;
+  cursor: crosshair;
 }
 
 .lf-anchor:hover {
-  stroke: #409eff !important;
-  fill: #fff !important;
-  fill-opacity: 0.5 !important;
-  stroke-width: 1 !important;
+  stroke: #409EFF;
+  fill: rgba(64, 158, 255, 0.2);
 }
 
 /* 隐藏活动边缘 */
@@ -409,4 +600,70 @@ html, body, #app {
 /* 修复边缘调整控制点的样式 */
 .lf-edge-adjust-point {
   display: none !important;
+}
+
+/* 确保节点边框效果 */
+.lf-node-not-allow {
+  cursor: not-allowed;
+}
+
+/* 关闭选中节点的透明度变化 */
+.lf-node-selected,
+.lf-node:hover {
+  outline: none !important;
+  filter: brightness(1.05);
+  box-shadow: none !important;
+}
+
+/* 确保节点始终有边框 */
+.lf-node-content {
+  border: 1px solid #DCDFE6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* 禁用节点样式 */
+.node-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 节点左右两部分布局 */
+.node-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* 选中节点的连接点样式 */
+.lf-node-selected .lf-anchor {
+  fill: rgba(24, 144, 255, 0.2);
+  stroke: rgba(24, 144, 255, 0.5);
+  r: 4px;
+}
+
+/* 美化选中节点的样式 */
+.lf-node-selected .node-container {
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.3);
+}
+
+/* 节点内左侧图标区域样式 */
+.node-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 100%;
+  border-right: 1px solid #DCDFE6;
+}
+
+/* 节点内右侧文本区域样式 */
+.node-text-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

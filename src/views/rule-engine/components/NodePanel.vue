@@ -21,6 +21,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import type LogicFlow from '@logicflow/core';
+import { v4 as uuidv4 } from 'uuid';
 import SvgIcon from '@/components/SvgIcon/index.vue';
 
 const props = defineProps({
@@ -74,10 +75,13 @@ const onDragStart = (e: DragEvent, node: any) => {
     // 设置拖拽效果，必须包含"copy"或"move"
     e.dataTransfer.effectAllowed = 'copyMove';
     
-    // 使用更简洁的数据格式
+    // 使用更完整的数据格式，包含节点默认属性
     const dragData = {
       type: node.type,
-      label: node.label
+      label: node.label,
+      id: uuidv4(),
+      icon: node.icon,
+      properties: getDefaultProperties(node.type, node.label)
     };
     
     // 设置多种数据格式，确保兼容性
@@ -114,6 +118,53 @@ const onDragStart = (e: DragEvent, node: any) => {
     }, 100);
     
     console.log('开始拖拽节点:', node.type, '数据:', jsonString);
+  }
+};
+
+// 根据节点类型获取默认属性
+const getDefaultProperties = (type: string, label: string) => {
+  // 通用属性
+  const commonProps = {
+    name: label,
+    desc: `${label}节点`,
+    frontend_status: '1'
+  };
+  
+  // 根据节点类型添加特定属性
+  switch (type) {
+    case 'start':
+      return {
+        ...commonProps,
+        trigger: '默认触发器'
+      };
+    case 'log':
+      return {
+        ...commonProps,
+        template: '${msg.data}'
+      };
+    case 'assignment':
+      return {
+        ...commonProps,
+        variable: 'result',
+        value: ''
+      };
+    case 'decision':
+      return {
+        ...commonProps,
+        condition: ''
+      };
+    case 'startParallel':
+      return {
+        ...commonProps,
+        branches: 2
+      };
+    case 'endParallel':
+      return {
+        ...commonProps,
+        joinType: 'all'
+      };
+    default:
+      return commonProps;
   }
 };
 </script>

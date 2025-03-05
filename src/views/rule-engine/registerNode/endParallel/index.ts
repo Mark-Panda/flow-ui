@@ -41,6 +41,7 @@ export default function registerEndParallel(lf: any) {
           name: '并行结束',
           desc: '并行流程结束节点',
           frontend_status: '1',
+          icon: 'endParallel', // 设置图标
           ...this.properties,
         };
       }

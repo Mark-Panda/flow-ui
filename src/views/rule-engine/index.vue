@@ -84,6 +84,7 @@ import LogicFlow from '@logicflow/core';
 import { Menu, Snapshot, MiniMap } from '@logicflow/extension';
 import { ElMessage } from 'element-plus';
 import { convertToDSL, convertFromDSL } from '@/utils/index';
+import { v4 as uuidv4 } from 'uuid';
 import Control from './components/Control.vue';
 import NodePanel from './components/NodePanel.vue';
 import PropertyDialog from './components/PropertyDialog.vue';
@@ -138,83 +139,25 @@ const initLogicFlow = async () => {
   const clientWidth = container.value.clientWidth || 800;
   const clientHeight = container.value.clientHeight || 600;
   
+  console.log('画布容器尺寸:', { clientWidth, clientHeight });
+  
   // 直接清空容器内容，准备重新创建
   container.value.innerHTML = '';
-  
-  console.log('使用宽高:', clientWidth, clientHeight);
+  container.value.style.overflow = 'hidden'; // 确保容器不会有滚动条
   
   try {
-    // GitHub issue #675 解决方案：直接创建SVG元素
-    // 首先创建一个与容器相同尺寸的div
+    // 创建一个固定的div作为LogicFlow容器
     const lfContainer = document.createElement('div');
-    lfContainer.style.width = `${clientWidth}px`;
-    lfContainer.style.height = `${clientHeight}px`;
-    lfContainer.style.position = 'relative';
+    lfContainer.id = 'lf-container';
+    lfContainer.style.width = '100%';
+    lfContainer.style.height = '100%';
+    lfContainer.style.position = 'absolute';
+    lfContainer.style.top = '0';
+    lfContainer.style.left = '0';
+    lfContainer.style.overflow = 'hidden';
     container.value.appendChild(lfContainer);
     
-    // 添加拖拽事件监听器
-    lfContainer.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      if (e.dataTransfer) {
-        e.dataTransfer.dropEffect = 'copy'; // 显示为复制操作
-      }
-    });
-    
-    lfContainer.addEventListener('drop', (e) => {
-      e.preventDefault();
-      console.log('原生drop事件触发', e);
-      
-      // 手动处理拖拽数据
-      try {
-        const dataTransfer = e.dataTransfer;
-        if (!dataTransfer) {
-          console.error('无效的dataTransfer对象');
-          return;
-        }
-        
-        let data = null;
-        
-        // 尝试不同的数据格式
-        if (dataTransfer.types.includes('application/logicflow')) {
-          data = JSON.parse(dataTransfer.getData('application/logicflow'));
-        } else if (dataTransfer.types.includes('application/json')) {
-          data = JSON.parse(dataTransfer.getData('application/json'));
-        } else if (dataTransfer.types.includes('text/plain')) {
-          data = JSON.parse(dataTransfer.getData('text/plain'));
-        }
-        
-        if (data && data.type && data.label) {
-          console.log('成功解析拖拽数据:', data);
-          
-          // 手动添加节点
-          const rect = lfContainer.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          
-          // 添加节点
-          logicFlow.addNode({
-            type: data.type,
-            x,
-            y,
-            text: data.label,
-            properties: {
-              name: data.label,
-              desc: `${data.label}节点`,
-              frontend_status: '1',
-            },
-          });
-          
-          // 成功消息
-          ElMessage.success(`成功添加${data.label}节点`);
-        } else {
-          console.error('拖拽数据格式不正确:', dataTransfer.types);
-        }
-      } catch (err) {
-        console.error('处理拖拽数据失败:', err);
-        ElMessage.error('添加节点失败');
-      }
-    });
-    
+    // 极简配置，专注于解决拖拽问题
     // @ts-ignore - 忽略LogicFlow构造函数的类型错误
     const logicFlow = new LogicFlow({
       container: lfContainer,
@@ -226,68 +169,34 @@ const initLogicFlow = async () => {
       grid: {
         size: 10,
         visible: true,
+        type: 'dot',
       },
       keyboard: {
         enabled: true,
       },
-      // 禁用边调整功能，避免拖动边框效果
-      adjustEdge: false,
-      adjustEdgeStartAndEnd: false,
-      // 禁用边选中和悬停效果
-      edgeSelectedOutline: false,
-      hoverOutline: false,
+      style: {
+        nodeText: {
+          overflowMode: 'ellipsis',
+          fontSize: 14,
+        },
+        edgeText: {
+          overflowMode: 'ellipsis',
+          fontSize: 14,
+        },
+      },
+      snapline: false,
       nodeTextEdit: false,
       edgeTextEdit: false,
-      // 禁用缩放和自动扩展
-      autoExpand: false,  // 改为false避免画布自动扩展
-      stopScrollGraph: true, // 禁止画布自动滚动
-      stopZoomGraph: false,  // 允许缩放
-      // 移除节点选中阴影效果
       nodeSelectedOutline: false,
-      // 启用插件
       plugins: [Menu, MiniMap, Snapshot],
     });
     
-    // 修复逻辑：手动调整画布大小，强制重新渲染
-    setTimeout(() => {
-      try {
-        if (logicFlow) {
-          console.log('正在重新调整画布大小...');
-          logicFlow.resize(clientWidth, clientHeight);
-          
-          // 允许拖放
-          logicFlow.extension.dndPanel = {
-            enable: true,
-          };
-        }
-      } catch (err) {
-        console.error('重新调整画布大小失败:', err);
-      }
-    }, 200);
-    
+    // 设置为本地变量
     lf.value = logicFlow;
     showLf.value = true;
     
-    // 设置主题
-    logicFlow.setTheme({
-      baseNode: {
-        fill: '#FFFFFF',
-        stroke: '#000000',
-        strokeWidth: 1,
-      },
-      nodeText: {
-        color: '#000000',
-        overflowMode: 'ellipsis',
-        padding: '0 15px',
-        fontSize: 14,
-      },
-      edgeText: {
-        color: '#000000',
-        background: {
-          fill: '#ffffff',
-        },
-      },
-    });
+    // 设置画布主题
+    setCanvasTheme(logicFlow);
     
     // 设置默认边类型
     logicFlow.setDefaultEdgeType('bezier');
@@ -296,35 +205,21 @@ const initLogicFlow = async () => {
     registerNodes(logicFlow);
     registerEdges(logicFlow);
     
-    // 修改节点点击事件，只记录选中节点，不显示属性面板
-    logicFlow.on('node:click', (data: { data: any }) => {
-      console.log('Node clicked:', data);
-      nodeData.value = data.data as Record<string, any>;
-      // 不再自动显示属性面板
-      // showAttribute.value = true;
-    });
+    // 设置拖拽事件
+    setupDragEvents(lfContainer, logicFlow);
     
-    // 添加双击事件，显示属性面板
-    logicFlow.on('node:dbclick', (data: { data: any }) => {
-      console.log('Node double clicked:', data);
-      nodeData.value = data.data as Record<string, any>;
-      showAttribute.value = true;
-    });
+    // 设置事件监听
+    setupEventListeners(logicFlow);
     
-    // 添加画布点击事件，点击空白处隐藏属性面板
-    lfContainer.addEventListener('click', (e) => {
-      // 判断点击的是否为画布空白处（非节点区域）
-      const target = e.target as Element;
-      // 如果点击的是画布本身或其直接子元素（非节点），则隐藏属性面板
-      if (target.classList.contains('lf-canvas') || 
-          target.classList.contains('lf-graph') ||
-          target.classList.contains('lf-background')) {
-        showAttribute.value = false;
-      }
-    });
+    // 延迟渲染初始数据，确保画布已完全初始化
+    setTimeout(() => {
+      renderInitialData();
+    }, 100);
     
-    // 渲染初始数据
-    renderInitialData();
+    // 启用自动缩放以适应内容
+    logicFlow.resize(clientWidth, clientHeight);
+    
+    console.log('LogicFlow初始化完成');
   } catch (e) {
     console.error('初始化LogicFlow失败:', e);
     console.error('错误详情:', e instanceof Error ? e.message : String(e));
@@ -335,54 +230,10 @@ const initLogicFlow = async () => {
 const renderInitialData = () => {
   if (!lf.value) return;
   
-  // 初始数据
+  // 初始化一个空画布，不添加任何默认节点
   const initData = {
-    nodes: [
-      {
-        id: '1',
-        type: 'start',
-        x: 300,
-        y: 100,
-        properties: {
-          name: '开始',
-          desc: '规则链入口',
-          frontend_status: '1',
-        },
-        text: {
-          x: 300,
-          y: 100,
-          value: '开始',
-        },
-      },
-      {
-        id: '2',
-        type: 'log',
-        x: 300,
-        y: 250,
-        properties: {
-          name: '日志',
-          desc: '输出日志',
-          template: '${msg.data}',
-          frontend_status: '1',
-        },
-        text: {
-          x: 300,
-          y: 250,
-          value: '日志',
-        },
-      },
-    ],
-    edges: [
-      {
-        id: '1-2',
-        type: 'bezier',
-        sourceNodeId: '1',
-        targetNodeId: '2',
-        properties: {
-          edgeType: 'success',
-        },
-      },
-    ],
+    nodes: [],
+    edges: []
   };
   
   lf.value.render(initData);
@@ -578,6 +429,269 @@ const loadDemo = () => {
   }
 };
 
+// 新增函数 - 设置主题
+const setCanvasTheme = (lf: any) => {
+  lf.setTheme({
+    baseNode: {
+      fill: '#FFFFFF',
+      stroke: '#DCDFE6',
+      strokeWidth: 1,
+      opacity: 1,
+      radius: 4,
+    },
+    nodeText: {
+      color: '#333333',
+      overflowMode: 'ellipsis',
+      fontSize: 14,
+    },
+    edgeText: {
+      color: '#333333',
+      background: {
+        fill: '#ffffff',
+      },
+    },
+    anchor: {
+      stroke: '#C0C4CC',
+      fill: '#FFFFFF',
+      r: 4,
+      hover: {
+        stroke: '#409EFF',
+        fill: 'rgba(64, 158, 255, 0.2)',
+        r: 6,
+      },
+    },
+  });
+};
+
+// 新增函数 - 设置拖拽事件
+const setupDragEvents = (container: HTMLElement, lfInstance: any) => {
+  // 添加拖拽事件监听器
+  container.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  });
+
+  container.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('拖拽节点到画布');
+    
+    if (!e.dataTransfer) {
+      console.error('无效的拖拽数据');
+      return;
+    }
+    
+    // 确保LogicFlow实例有效
+    if (!lfInstance || typeof lfInstance.addNode !== 'function') {
+      console.error('LogicFlow实例无效或缺少addNode方法');
+      ElMessage.error('系统错误：画布实例无效');
+      return;
+    }
+    
+    // 尝试从多种格式获取数据
+    let jsonData = '';
+    try {
+      if (e.dataTransfer.types.includes('application/logicflow')) {
+        jsonData = e.dataTransfer.getData('application/logicflow');
+      } else if (e.dataTransfer.types.includes('application/json')) {
+        jsonData = e.dataTransfer.getData('application/json');
+      } else if (e.dataTransfer.types.includes('text/plain')) {
+        jsonData = e.dataTransfer.getData('text/plain');
+      }
+      
+      if (!jsonData) {
+        console.error('未找到有效的拖拽数据');
+        ElMessage.error('无法识别拖拽的节点类型');
+        return;
+      }
+      
+      // 解析节点数据
+      const nodeData = JSON.parse(jsonData);
+      if (!nodeData || !nodeData.type) {
+        console.error('节点数据格式无效');
+        ElMessage.error('节点数据无效');
+        return;
+      }
+      
+      // 获取放置坐标
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      // 优先使用拖拽源提供的UUID，如果没有则生成新的
+      const nodeId = nodeData.id || uuidv4();
+      const nodeLabel = nodeData.label || nodeData.type;
+      
+      // 构造完整的节点配置，保留必要的信息
+      const nodeConfig = {
+        id: nodeId,
+        type: nodeData.type,
+        x: x,
+        y: y,
+        text: { 
+          value: nodeLabel,
+          x: x,
+          y: y
+        },
+        width: 160,
+        height: 60,
+        properties: {
+          name: nodeLabel,
+          desc: `${nodeLabel}节点`,
+          frontend_status: '1',
+          ...nodeData.properties // 合并原始属性
+        }
+      };
+      
+      console.log('添加节点:', nodeConfig);
+      
+      try {
+        // 使用最原始的方法尝试添加节点
+        if (lfInstance) {
+          // 显示加载状态，提示用户
+          ElMessage({
+            message: '正在添加节点...',
+            duration: 2000,
+            type: 'info'
+          });
+          
+          // 延迟处理以避免可能的渲染冲突
+          setTimeout(() => {
+            try {
+              // 使用事务方式添加节点，确保连接点正确显示
+              const node = lfInstance.addNode(nodeConfig);
+              console.log('节点添加成功', node);
+              
+              // 强制刷新画布，确保连接点显示
+              setTimeout(() => {
+                try {
+                  // 获取当前画布数据
+                  const graphData = lfInstance.getGraphData();
+                  // 重新渲染画布
+                  lfInstance.render(graphData);
+                  
+                  // 选中新添加的节点
+                  lfInstance.selectElementById(nodeId);
+                  
+                  ElMessage.success('节点添加成功');
+                } catch (refreshError) {
+                  console.error('刷新画布失败:', refreshError);
+                }
+              }, 100);
+            } catch (error) {
+              console.error('添加节点失败:', error);
+              ElMessage.error('添加节点失败');
+              
+              // 如果首选方法失败，尝试备用方法
+              tryBackupAddMethod(lfInstance, nodeData, x, y, nodeId, nodeLabel);
+            }
+          }, 50);
+        }
+      } catch (error) {
+        console.error('添加节点失败:', error);
+        ElMessage.error('添加节点失败');
+        
+        // 尝试备用方法
+        tryBackupAddMethod(lfInstance, nodeData, x, y, nodeId, nodeLabel);
+      }
+      
+    } catch (error) {
+      console.error('处理拖拽出错:', error);
+      ElMessage.error('添加节点失败');
+    }
+  });
+};
+
+// 修改备用添加节点方法，保留更多节点信息
+const tryBackupAddMethod = (lfInstance: any, nodeData: any, x: number, y: number, nodeId: string, nodeLabel: string) => {
+  console.log('尝试备用方法添加节点');
+  try {
+    // 使用LogicFlow API创建完整节点
+    const completeNodeData = {
+      id: nodeId,
+      type: nodeData.type,
+      x: x,
+      y: y,
+      text: { 
+        value: nodeLabel,
+        x: x,
+        y: y
+      },
+      width: 160,
+      height: 60,
+      properties: {
+        name: nodeLabel,
+        desc: `${nodeLabel}节点`,
+        frontend_status: '1',
+        ...nodeData.properties // 合并原始属性
+      }
+    };
+    
+    // 直接使用较低级别的API创建节点
+    const nodeModel = lfInstance.graphModel.createNode(completeNodeData);
+    lfInstance.graphModel.addNode(nodeModel);
+    lfInstance.graphModel.eventCenter.emit('graph:transform');
+    
+    console.log('备用方法添加节点成功');
+    ElMessage.success('节点添加成功（备用方法）');
+  } catch (error) {
+    console.error('备用方法添加节点失败:', error);
+    ElMessage.error('节点添加失败，请刷新页面重试');
+  }
+};
+
+// 新增函数 - 设置事件监听
+const setupEventListeners = (lf: any) => {
+  // 单击节点
+  lf.on('node:click', (data: { data: any }) => {
+    console.log('单击节点:', data);
+    nodeData.value = data.data as Record<string, any>;
+  });
+  
+  // 双击节点
+  lf.on('node:dbclick', (data: { data: any }) => {
+    console.log('双击节点:', data);
+    nodeData.value = data.data as Record<string, any>;
+    showAttribute.value = true;
+  });
+  
+  // 画布点击
+  lf.on('blank:click', () => {
+    showAttribute.value = false;
+  });
+  
+  // 连线相关事件
+  lf.on('connection:success', (data: any) => {
+    console.log('连线成功:', data);
+  });
+  
+  lf.on('connection:not-allowed', (data: any) => {
+    console.log('连线被拒绝:', data);
+    ElMessage.warning('连线不被允许');
+  });
+  
+  // 拖拽相关事件
+  lf.on('node:dragstart', (data: any) => {
+    console.log('开始拖动节点:', data.id);
+  });
+  
+  lf.on('node:drag', (data: any) => {
+    // 节点拖动中
+  });
+  
+  lf.on('node:drop', (data: any) => {
+    console.log('节点放置:', data.id);
+  });
+  
+  // 画布缩放事件
+  lf.on('graph:transform', () => {
+    // 画布变换
+  });
+};
+
 onMounted(() => {
   // 使用requestAnimationFrame确保DOM已渲染
   window.requestAnimationFrame(() => {
@@ -608,6 +722,7 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden; // 防止出现滚动条
 }
 
 .top-toolbar {
@@ -645,6 +760,15 @@ onMounted(() => {
   position: relative;
   min-width: 600px;
   min-height: 400px;
+  overflow: hidden; // 防止容器出现滚动条
+}
+
+// 确保 LogicFlow 容器样式
+:deep(.lf-graph) {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: visible !important; // 关键：确保节点不会被裁剪
 }
 
 .control-panel-container {

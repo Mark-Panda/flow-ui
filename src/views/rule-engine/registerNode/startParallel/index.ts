@@ -42,6 +42,7 @@ export default function registerStartParallel(lf: any) {
           name: '并行开始',
           desc: '并行流程开始节点',
           frontend_status: '1',
+          icon: 'startParallel', // 设置图标
           ...this.properties,
         };
       }

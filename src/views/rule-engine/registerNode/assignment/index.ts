@@ -12,6 +12,7 @@ export default function registerAssignment(lf: any) {
         const { x, y, width, height, properties } = this.props.model;
         const stroke = properties.frontend_status === '0' ? '#FF0000' : '#1890FF';
         
+        // 使用从SVG文件中读取的图标
         return {
           type: 'svg',
           svg: {
@@ -30,7 +31,7 @@ export default function registerAssignment(lf: any) {
       constructor(data: any, graphModel: any) {
         super(data, graphModel);
         this.type = 'assignment';
-        // J设置固定大小
+        // 设置固定大小
         this.width = 120;
         this.height = 60;
         // 禁用大小调整

@@ -9,6 +9,9 @@ export default function registerLog(lf: any) {
       setHtml(rootEl: HTMLElement) {
         const { properties } = this.props.model;
         
+        // 清空根元素内容，避免重复渲染
+        rootEl.innerHTML = '';
+        
         // 使用Vue渲染组件
         const app = createApp(LogNode, {
           text: properties.name || '日志',
@@ -44,7 +47,7 @@ export default function registerLog(lf: any) {
       
       getConnectedTargetRules() {
         const edges = this.outgoing.edges;
-        return edges.map((edge: Edge) => {
+        return edges.map((edge: any) => {
           return {
             nodeId: edge.targetNodeId,
             edgeId: edge.id,
