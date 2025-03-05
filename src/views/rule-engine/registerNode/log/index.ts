@@ -59,26 +59,65 @@ export default function registerLog(lf: any) {
       
       getDefaultAnchor() {
         const { id, x, y, width, height } = this;
+        
+        // 确保x和y是有效数值
+        const safeX = isNaN(x) ? 0 : x;
+        const safeY = isNaN(y) ? 0 : y;
+        const safeWidth = isNaN(width) ? 160 : width;
+        const safeHeight = isNaN(height) ? 60 : height;
+        
         return [
+          // 右侧连接点
           {
-            x: x + width / 2,
-            y,
+            x: safeX + safeWidth / 2,
+            y: safeY,
             id: `${id}_right`,
             type: 'right',
             edgeAddable: true,
             nodeAddable: false,
             className: 'node-anchor'
           },
+          // 左侧连接点
           {
-            x: x - width / 2,
-            y,
+            x: safeX - safeWidth / 2,
+            y: safeY,
             id: `${id}_left`,
             type: 'left',
             edgeAddable: true,
             nodeAddable: false,
             className: 'node-anchor'
           },
+          // 顶部连接点
+          {
+            x: safeX,
+            y: safeY - safeHeight / 2,
+            id: `${id}_top`,
+            type: 'top',
+            edgeAddable: true,
+            nodeAddable: false,
+            className: 'node-anchor'
+          },
+          // 底部连接点
+          {
+            x: safeX,
+            y: safeY + safeHeight / 2,
+            id: `${id}_bottom`,
+            type: 'bottom',
+            edgeAddable: true,
+            nodeAddable: false,
+            className: 'node-anchor'
+          }
         ];
+      }
+      
+      // 允许作为目标连接
+      isAllowConnectedAsTarget() {
+        return true;
+      }
+      
+      // 允许作为源连接
+      isAllowConnectedAsSource() {
+        return true;
       }
     }
     

@@ -36,9 +36,7 @@ export default function registerBaseNode(lf: any) {
       // 获取左侧图标
       getIcon() {
         const { x, y, width, height, properties } = this.props.model;
-        const iconType = properties.icon || this.props.model.type;
-        const iconColor = properties.frontend_status === '0' ? '#FF0000' : '#409EFF';
-        const iconHtml = this.getIconByType(iconType, iconColor);
+        const iconColor = properties.frontend_status === '0' ? '#FF0000' : '#1890FF';
         
         // 确保x和y是有效数值
         const safeX = isNaN(x) ? 0 : x;
@@ -46,22 +44,19 @@ export default function registerBaseNode(lf: any) {
         const safeWidth = isNaN(width) ? 160 : width;
         const safeHeight = isNaN(height) ? 60 : height;
         
-        return h('foreignObject', {
-          width: 30,
-          height: safeHeight,
-          x: safeX - safeWidth / 2 + 5,
-          y: safeY - safeHeight / 2,
-        }, [
-          h('div', {
-            className: 'node-icon-container',
-            style: {
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              width: '100%',
-            },
-            innerHTML: `<svg viewBox="0 0 1024 1024" width="24" height="24">${iconHtml}</svg>`,
+        // 使用简单的SVG元素替代foreignObject
+        return h('g', {}, [
+          h('rect', {
+            width: 24,
+            height: 24,
+            x: safeX - safeWidth / 2 + 8,
+            y: safeY - safeHeight / 2 + (safeHeight - 24) / 2,
+            fill: 'transparent',
+          }),
+          h('path', {
+            d: 'M512 149.333333c200.298667 0 362.666667 162.368 362.666667 362.666667s-162.368 362.666667-362.666667 362.666667S149.333333 712.298667 149.333333 512 311.701333 149.333333 512 149.333333z m0 64c-164.949333 0-298.666667 133.717333-298.666667 298.666667s133.717333 298.666667 298.666667 298.666667 298.666667-133.717333 298.666667-298.666667-133.717333-298.666667-298.666667-298.666667z m-128 213.333334v170.666666h256v-170.666666h-256z',
+            fill: iconColor,
+            transform: `translate(${safeX - safeWidth / 2 + 8}, ${safeY - safeHeight / 2 + (safeHeight - 24) / 2}) scale(0.025)`,
           })
         ]);
       }
@@ -79,32 +74,17 @@ export default function registerBaseNode(lf: any) {
         
         // 确保text存在且有value属性
         const textValue = text && typeof text === 'object' && text.value ? text.value : 
-                         (typeof text === 'string' ? text : '');
+                         (typeof text === 'string' ? text : '节点');
         
-        return h('foreignObject', {
-          width: safeWidth - 40,
-          height: safeHeight,
-          x: safeX - safeWidth / 2 + 40,
-          y: safeY - safeHeight / 2,
-        }, [
-          h('div', {
-            className: 'node-text-container',
-            style: {
-              color: textColor,
-              fontSize: '14px',
-              fontWeight: 'normal',
-              display: 'flex',
-              alignItems: 'center',
-              height: '100%',
-              width: '100%',
-              padding: '0 10px',
-              boxSizing: 'border-box',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            },
-          }, textValue)
-        ]);
+        // 使用简单的文本元素替代foreignObject
+        return h('text', {
+          x: safeX + 15,
+          y: safeY + 5,
+          fill: textColor,
+          fontSize: 14,
+          textAnchor: 'start',
+          dominantBaseline: 'middle',
+        }, textValue);
       }
       
       // 获取分隔线
@@ -117,10 +97,11 @@ export default function registerBaseNode(lf: any) {
         const safeWidth = isNaN(width) ? 160 : width;
         const safeHeight = isNaN(height) ? 60 : height;
         
+        // 使用简单的线条元素
         return h('line', {
-          x1: safeX - safeWidth / 2 + 35,
+          x1: safeX - safeWidth / 2 + 40,
           y1: safeY - safeHeight / 2,
-          x2: safeX - safeWidth / 2 + 35,
+          x2: safeX - safeWidth / 2 + 40,
           y2: safeY + safeHeight / 2,
           stroke: '#DCDFE6',
           strokeWidth: 1,
@@ -144,17 +125,63 @@ export default function registerBaseNode(lf: any) {
       // 重写渲染方法
       render() {
         const { model } = this.props;
-        const { properties } = model;
-        const statusClass = properties.frontend_status === '0' ? 'node-disabled' : '';
+        const { x, y, width, height, id } = model;
         
-        return h('g', {
-          className: `node-container ${statusClass}`,
-        }, [
-          this.getShape(),
-          this.getDivider(),
-          this.getIcon(),
-          this.getText(),
-        ]);
+        // 确保坐标有效
+        const safeX = isNaN(x) ? 0 : x;
+        const safeY = isNaN(y) ? 0 : y;
+        const safeWidth = isNaN(width) ? 160 : width;
+        const safeHeight = isNaN(height) ? 60 : height;
+        
+        // 获取节点形状
+        const shape = this.getShape();
+        
+        // 获取图标
+        const icon = this.getIcon();
+        
+        // 获取文本
+        const text = this.getText();
+        
+        // 获取分隔线
+        const divider = this.getDivider();
+        
+        // 手动创建锚点
+        const anchors = this.createAnchors(safeX, safeY, safeWidth, safeHeight, id);
+        
+        // 返回完整的节点渲染
+        return h('g', {}, [shape, icon, text, divider, ...anchors]);
+      }
+      
+      // 创建锚点元素
+      createAnchors(x: number, y: number, width: number, height: number, id: string) {
+        // 定义锚点位置
+        const anchorPositions = [
+          { x: x + width / 2, y: y, type: 'right' },
+          { x: x - width / 2, y: y, type: 'left' },
+          { x: x, y: y - height / 2, type: 'top' },
+          { x: x, y: y + height / 2, type: 'bottom' }
+        ];
+        
+        // 创建锚点元素
+        return anchorPositions.map(pos => {
+          return h('circle', {
+            cx: pos.x,
+            cy: pos.y,
+            r: 8,
+            fill: '#FFFFFF',
+            stroke: '#409EFF',
+            strokeWidth: 2,
+            className: `lf-node-anchor lf-node-anchor-${pos.type} node-anchor-visible`,
+            style: {
+              display: 'block',
+              visibility: 'visible',
+              opacity: 1,
+              cursor: 'crosshair'
+            },
+            'data-anchor-id': `${id}_${pos.type}`,
+            'data-anchor-type': pos.type
+          });
+        });
       }
     }
     
@@ -196,6 +223,31 @@ export default function registerBaseNode(lf: any) {
         const safeWidth = isNaN(width) ? 160 : width;
         const safeHeight = isNaN(height) ? 60 : height;
         
+        // 通用锚点配置
+        const commonAnchorProps = {
+          edgeAddable: true,
+          nodeAddable: false,
+          className: 'node-anchor node-anchor-visible',
+          // 确保连接点始终可见
+          isVisible: true,
+          isShowAnchor: true,
+          isSourceAnchor: true,
+          isTargetAnchor: true,
+          showAnchor: true,
+          visible: true,
+          // 添加更多控制属性
+          disableRotate: false,
+          style: {
+            stroke: '#409EFF',
+            fill: '#FFFFFF',
+            strokeWidth: 2,
+            r: 6,
+            visibility: 'visible',
+            display: 'block',
+            opacity: 1
+          }
+        };
+        
         return [
           // 右侧连接点
           {
@@ -203,9 +255,7 @@ export default function registerBaseNode(lf: any) {
             y: safeY,
             id: `${id}_right`,
             type: 'right',
-            edgeAddable: true,
-            nodeAddable: false,
-            className: 'node-anchor'
+            ...commonAnchorProps
           },
           // 左侧连接点
           {
@@ -213,10 +263,24 @@ export default function registerBaseNode(lf: any) {
             y: safeY,
             id: `${id}_left`,
             type: 'left',
-            edgeAddable: true,
-            nodeAddable: false,
-            className: 'node-anchor'
+            ...commonAnchorProps
           },
+          // 顶部连接点
+          {
+            x: safeX,
+            y: safeY - safeHeight / 2,
+            id: `${id}_top`,
+            type: 'top',
+            ...commonAnchorProps
+          },
+          // 底部连接点
+          {
+            x: safeX,
+            y: safeY + safeHeight / 2,
+            id: `${id}_bottom`,
+            type: 'bottom',
+            ...commonAnchorProps
+          }
         ];
       }
       
@@ -228,6 +292,37 @@ export default function registerBaseNode(lf: any) {
       // 允许作为源连接
       isAllowConnectedAsSource() {
         return true;
+      }
+      
+      // 获取锚点样式
+      getAnchorStyle() {
+        // 使用更简单的样式定义，确保锚点可见
+        return {
+          stroke: '#409EFF',
+          fill: '#FFFFFF',
+          strokeWidth: 2,
+          r: 8, // 增大锚点尺寸，使其更容易被点击
+          opacity: 1,
+          display: 'block',
+          visibility: 'visible',
+          className: 'node-anchor-visible', // 添加自定义类名
+          // 悬停样式
+          hover: {
+            stroke: '#409EFF',
+            fill: '#E6F7FF',
+            r: 10,
+            strokeWidth: 3,
+          },
+        };
+      }
+      
+      // 获取锚点配置
+      getAnchorConfig() {
+        return {
+          visible: true,
+          showAnchor: true,
+          edgeAddable: true,
+        };
       }
     }
     

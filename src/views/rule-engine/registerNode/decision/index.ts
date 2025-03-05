@@ -47,24 +47,19 @@ export default function registerDecision(lf: any) {
         const safeWidth = isNaN(width) ? 120 : width;
         const safeHeight = isNaN(height) ? 60 : height;
         
-        return h('foreignObject', {
-          width: 30,
-          height: safeHeight,
-          x: safeX - safeWidth / 2 + 5,
-          y: safeY - safeHeight / 2,
-        }, [
-          h('div', {
-            className: 'node-icon-container',
-            style: {
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              width: '100%',
-            },
-            innerHTML: `<svg viewBox="0 0 1024 1024" width="24" height="24">
-              <path fill="${iconColor}" d="M512 149.333333c200.298667 0 362.666667 162.368 362.666667 362.666667s-162.368 362.666667-362.666667 362.666667S149.333333 712.298667 149.333333 512 311.701333 149.333333 512 149.333333z m0 64c-164.949333 0-298.666667 133.717333-298.666667 298.666667s133.717333 298.666667 298.666667 298.666667 298.666667-133.717333 298.666667-298.666667-133.717333-298.666667-298.666667-298.666667z m-128 213.333334v170.666666h256v-170.666666h-256z" />
-            </svg>`,
+        // 创建一个简单的SVG图标，避免使用foreignObject
+        return h('g', {}, [
+          h('rect', {
+            width: 24,
+            height: 24,
+            x: safeX - safeWidth / 2 + 8,
+            y: safeY - safeHeight / 2 + (safeHeight - 24) / 2,
+            fill: 'transparent',
+          }),
+          h('path', {
+            d: 'M512 149.333333c200.298667 0 362.666667 162.368 362.666667 362.666667s-162.368 362.666667-362.666667 362.666667S149.333333 712.298667 149.333333 512 311.701333 149.333333 512 149.333333z m0 64c-164.949333 0-298.666667 133.717333-298.666667 298.666667s133.717333 298.666667 298.666667 298.666667 298.666667-133.717333 298.666667-298.666667-133.717333-298.666667-298.666667-298.666667z m-128 213.333334v170.666666h256v-170.666666h-256z',
+            fill: iconColor,
+            transform: `translate(${safeX - safeWidth / 2 + 8}, ${safeY - safeHeight / 2 + (safeHeight - 24) / 2}) scale(0.025)`,
           })
         ]);
       }
@@ -83,30 +78,15 @@ export default function registerDecision(lf: any) {
         const textValue = text && typeof text === 'object' && text.value ? text.value : 
                          (typeof text === 'string' ? text : '判断');
         
-        return h('foreignObject', {
-          width: safeWidth - 40,
-          height: safeHeight,
-          x: safeX - safeWidth / 2 + 40,
-          y: safeY - safeHeight / 2,
-        }, [
-          h('div', {
-            className: 'node-text-container',
-            style: {
-              color: textColor,
-              fontSize: '14px',
-              fontWeight: 'normal',
-              display: 'flex',
-              alignItems: 'center',
-              height: '100%',
-              width: '100%',
-              padding: '0 10px',
-              boxSizing: 'border-box',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            },
-          }, textValue)
-        ]);
+        // 使用简单的文本元素替代foreignObject
+        return h('text', {
+          x: safeX + 15,
+          y: safeY + 5,
+          fill: textColor,
+          fontSize: 14,
+          textAnchor: 'start',
+          dominantBaseline: 'middle',
+        }, textValue);
       }
       
       // 获取分隔线
@@ -177,7 +157,7 @@ export default function registerDecision(lf: any) {
         const safeHeight = isNaN(height) ? 60 : height;
         
         return [
-          // 右侧连接点
+          // 右侧连接点 - 成功路径
           {
             x: safeX + safeWidth / 2,
             y: safeY,
@@ -197,6 +177,26 @@ export default function registerDecision(lf: any) {
             nodeAddable: false,
             className: 'node-anchor'
           },
+          // 顶部连接点
+          {
+            x: safeX,
+            y: safeY - safeHeight / 2,
+            id: `${id}_top`,
+            type: 'top',
+            edgeAddable: true,
+            nodeAddable: false,
+            className: 'node-anchor'
+          },
+          // 底部连接点 - 失败路径
+          {
+            x: safeX,
+            y: safeY + safeHeight / 2,
+            id: `${id}_bottom`,
+            type: 'bottom',
+            edgeAddable: true,
+            nodeAddable: false,
+            className: 'node-anchor'
+          }
         ];
       }
       

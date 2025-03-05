@@ -91,6 +91,13 @@ import PropertyDialog from './components/PropertyDialog.vue';
 import registerNodes from './registerNode';
 import registerEdges from './registerEdge';
 
+// 声明全局变量
+declare global {
+  interface Window {
+    anchorUpdateThrottle: any;
+  }
+}
+
 const props = defineProps({
   title: {
     type: String,
@@ -155,14 +162,39 @@ const initLogicFlow = async () => {
     lfContainer.style.top = '0';
     lfContainer.style.left = '0';
     lfContainer.style.overflow = 'hidden';
+    
+    // 确保容器有明确的尺寸
+    lfContainer.style.minWidth = `${clientWidth}px`;
+    lfContainer.style.minHeight = `${clientHeight}px`;
+    
+    // 添加到DOM
     container.value.appendChild(lfContainer);
     
-    // 极简配置，专注于解决拖拽问题
+    // 确保容器已经完全渲染并有尺寸
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // 再次检查容器尺寸
+    const finalWidth = lfContainer.clientWidth || clientWidth;
+    const finalHeight = lfContainer.clientHeight || clientHeight;
+    
+    console.log('最终LogicFlow容器尺寸:', { finalWidth, finalHeight });
+    
+    // 确保容器已经挂载到DOM并有尺寸
+    if (finalWidth === 0 || finalHeight === 0) {
+      console.error('容器尺寸无效，无法初始化LogicFlow');
+      ElMessage.error('画布初始化失败：容器尺寸无效');
+      return;
+    }
+    
+    // 添加全局样式，确保锚点可见
+    addGlobalAnchorStyles();
+    
+    // 使用直接的DOM元素引用而不是ID选择器
     // @ts-ignore - 忽略LogicFlow构造函数的类型错误
     const logicFlow = new LogicFlow({
       container: lfContainer,
-      width: clientWidth,
-      height: clientHeight,
+      width: finalWidth,
+      height: finalHeight,
       background: {
         backgroundColor: '#ffffff',
       },
@@ -183,12 +215,65 @@ const initLogicFlow = async () => {
           overflowMode: 'ellipsis',
           fontSize: 14,
         },
+        anchor: {
+          stroke: '#409EFF',
+          fill: '#FFFFFF',
+          r: 6,
+          hover: {
+            stroke: '#409EFF',
+            fill: 'rgba(64, 158, 255, 0.2)',
+            r: 8,
+          },
+          visibility: 'visible',
+          display: 'block',
+          opacity: 1,
+        },
+        anchorLine: {
+          stroke: '#409EFF',
+          strokeWidth: 1,
+          strokeDasharray: '3,2',
+        },
+        nodeSelectedOutline: {
+          stroke: '#409EFF',
+          strokeWidth: 2,
+          strokeDasharray: '3,3',
+        },
+        edgeSelected: {
+          stroke: '#409EFF',
+          strokeWidth: 2,
+        },
+        edgeHovered: {
+          stroke: '#409EFF',
+          strokeWidth: 2,
+        },
       },
       snapline: false,
       nodeTextEdit: false,
       edgeTextEdit: false,
-      nodeSelectedOutline: false,
+      nodeSelectedOutline: true,
       plugins: [Menu, MiniMap, Snapshot],
+      // 显示连接点
+      edgeType: 'bezier',
+      adjustEdge: true,
+      adjustNodePosition: true,
+      hideAnchors: false,
+      // 允许连线
+      allowConnect: true,
+      // 始终显示锚点
+      alwaysShowAnchor: true,
+      // 允许所有节点之间连线
+      allowConnectNodes: () => true,
+      // 强制显示锚点
+      overlapMode: 0,
+      stopScrollGraph: false,
+      stopZoomGraph: false,
+      stopMoveGraph: false,
+      hoverOutline: false,
+      nodeTextDraggable: false,
+      edgeTextDraggable: false,
+      nodeMovable: true,
+      edgeDraggable: true,
+      metaKeyMultipleSelected: true,
     });
     
     // 设置为本地变量
@@ -217,12 +302,80 @@ const initLogicFlow = async () => {
     }, 100);
     
     // 启用自动缩放以适应内容
-    logicFlow.resize(clientWidth, clientHeight);
+    logicFlow.resize(finalWidth, finalHeight);
     
     console.log('LogicFlow初始化完成');
   } catch (e) {
     console.error('初始化LogicFlow失败:', e);
     console.error('错误详情:', e instanceof Error ? e.message : String(e));
+    
+    // 尝试备用初始化方法
+    tryBackupInitMethod();
+  }
+};
+
+// 备用初始化方法
+const tryBackupInitMethod = async () => {
+  console.log('尝试备用初始化方法');
+  
+  if (!container.value) {
+    console.error('容器元素不存在');
+    return;
+  }
+  
+  try {
+    // 清空容器
+    container.value.innerHTML = '';
+    
+    // 创建新的容器
+    const backupContainer = document.createElement('div');
+    backupContainer.id = 'backup-lf-container';
+    backupContainer.style.width = '100%';
+    backupContainer.style.height = '100%';
+    container.value.appendChild(backupContainer);
+    
+    // 等待DOM更新
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // 使用固定尺寸初始化
+    const fixedWidth = 800;
+    const fixedHeight = 600;
+    
+    console.log('备用方法使用固定尺寸:', { fixedWidth, fixedHeight });
+    
+    // 使用简化配置
+    // @ts-ignore
+    const backupLf = new LogicFlow({
+      container: backupContainer,
+      width: fixedWidth,
+      height: fixedHeight,
+      grid: true,
+      background: { backgroundColor: '#fff' },
+      plugins: [Menu, MiniMap],
+    });
+    
+    // 设置为本地变量
+    lf.value = backupLf;
+    showLf.value = true;
+    
+    // 注册节点和边
+    registerNodes(backupLf);
+    registerEdges(backupLf);
+    
+    // 设置拖拽事件
+    setupDragEvents(backupContainer, backupLf);
+    
+    // 设置事件监听
+    setupEventListeners(backupLf);
+    
+    // 渲染空画布
+    backupLf.render({ nodes: [], edges: [] });
+    
+    console.log('备用方法初始化成功');
+    ElMessage.success('画布已使用备用方法初始化');
+  } catch (error) {
+    console.error('备用初始化方法失败:', error);
+    ElMessage.error('画布初始化失败，请刷新页面重试');
   }
 };
 
@@ -236,7 +389,24 @@ const renderInitialData = () => {
     edges: []
   };
   
-  lf.value.render(initData);
+  try {
+    lf.value.render(initData);
+    console.log('初始数据渲染成功');
+  } catch (error) {
+    console.error('初始数据渲染失败:', error);
+    
+    // 尝试重新初始化
+    setTimeout(() => {
+      try {
+        if (lf.value) {
+          console.log('尝试重新渲染初始数据');
+          lf.value.render(initData);
+        }
+      } catch (retryError) {
+        console.error('重新渲染初始数据失败:', retryError);
+      }
+    }, 300);
+  }
 };
 
 // 显示DSL
@@ -536,7 +706,7 @@ const setupDragEvents = (container: HTMLElement, lfInstance: any) => {
           x: x,
           y: y
         },
-        width: 160,
+        width: nodeData.type === 'decision' ? 120 : 160,
         height: 60,
         properties: {
           name: nodeLabel,
@@ -570,11 +740,27 @@ const setupDragEvents = (container: HTMLElement, lfInstance: any) => {
                 try {
                   // 获取当前画布数据
                   const graphData = lfInstance.getGraphData();
-                  // 重新渲染画布
-                  lfInstance.render(graphData);
+                  console.log('当前画布数据:', graphData);
                   
-                  // 选中新添加的节点
-                  lfInstance.selectElementById(nodeId);
+                  // 确保节点有连接点
+                  if (graphData.nodes && graphData.nodes.length > 0) {
+                    // 重新渲染画布
+                    lfInstance.render(graphData);
+                    
+                    // 选中新添加的节点
+                    lfInstance.selectElementById(nodeId);
+                    
+                    // 强制更新连接点
+                    setTimeout(() => {
+                      try {
+                        // 触发画布更新事件
+                        lfInstance.graphModel.eventCenter.emit('anchor:update', { nodeId });
+                        lfInstance.graphModel.eventCenter.emit('graph:transform');
+                      } catch (anchorError) {
+                        console.warn('更新连接点失败:', anchorError);
+                      }
+                    }, 50);
+                  }
                   
                   ElMessage.success('节点添加成功');
                 } catch (refreshError) {
@@ -620,7 +806,7 @@ const tryBackupAddMethod = (lfInstance: any, nodeData: any, x: number, y: number
         x: x,
         y: y
       },
-      width: 160,
+      width: nodeData.type === 'decision' ? 120 : 160,
       height: 60,
       properties: {
         name: nodeLabel,
@@ -633,7 +819,25 @@ const tryBackupAddMethod = (lfInstance: any, nodeData: any, x: number, y: number
     // 直接使用较低级别的API创建节点
     const nodeModel = lfInstance.graphModel.createNode(completeNodeData);
     lfInstance.graphModel.addNode(nodeModel);
-    lfInstance.graphModel.eventCenter.emit('graph:transform');
+    
+    // 强制更新连接点和画布
+    setTimeout(() => {
+      try {
+        // 触发画布更新事件
+        lfInstance.graphModel.eventCenter.emit('anchor:update', { nodeId });
+        lfInstance.graphModel.eventCenter.emit('node:add', { nodeId });
+        lfInstance.graphModel.eventCenter.emit('graph:transform');
+        
+        // 选中新添加的节点
+        lfInstance.selectElementById(nodeId);
+        
+        // 重新渲染画布以确保连接点显示
+        const graphData = lfInstance.getGraphData();
+        lfInstance.render(graphData);
+      } catch (error) {
+        console.warn('更新连接点失败:', error);
+      }
+    }, 100);
     
     console.log('备用方法添加节点成功');
     ElMessage.success('节点添加成功（备用方法）');
@@ -645,10 +849,147 @@ const tryBackupAddMethod = (lfInstance: any, nodeData: any, x: number, y: number
 
 // 新增函数 - 设置事件监听
 const setupEventListeners = (lf: any) => {
+  // 强制显示所有锚点的函数
+  const forceShowAllAnchors = () => {
+    try {
+      // 查找所有锚点并强制显示
+      const anchors = document.querySelectorAll('circle.lf-anchor, circle.lf-node-anchor, circle[data-anchor-id]');
+      anchors.forEach((anchor: any) => {
+        anchor.style.display = 'block';
+        anchor.style.visibility = 'visible';
+        anchor.style.opacity = '1';
+        anchor.style.pointerEvents = 'auto';
+        anchor.style.cursor = 'crosshair';
+        anchor.setAttribute('r', '8');
+        anchor.setAttribute('stroke', '#409EFF');
+        anchor.setAttribute('fill', '#FFFFFF');
+        anchor.setAttribute('stroke-width', '2');
+      });
+      
+      // 查找所有锚点组并强制显示
+      const anchorGroups = document.querySelectorAll('.lf-anchor-group');
+      anchorGroups.forEach((group: any) => {
+        group.style.display = 'block';
+        group.style.visibility = 'visible';
+        group.style.opacity = '1';
+      });
+      
+      console.log(`强制显示 ${anchors.length} 个锚点`);
+      
+      // 如果没有找到锚点，尝试手动创建
+      if (anchors.length === 0) {
+        createMissingAnchors();
+      }
+    } catch (error) {
+      console.warn('强制显示锚点失败:', error);
+    }
+  };
+  
+  // 手动创建缺失的锚点
+  const createMissingAnchors = () => {
+    try {
+      // 获取所有节点
+      const nodes = document.querySelectorAll('.lf-node');
+      console.log(`找到 ${nodes.length} 个节点，准备创建锚点`);
+      
+      nodes.forEach((node: any) => {
+        // 获取节点ID
+        const nodeId = node.getAttribute('data-id');
+        if (!nodeId) return;
+        
+        // 获取节点模型
+        const nodeModel = lf.getNodeModelById(nodeId);
+        if (!nodeModel) return;
+        
+        // 获取节点位置和尺寸
+        const { x, y, width, height } = nodeModel;
+        if (isNaN(x) || isNaN(y) || isNaN(width) || isNaN(height)) return;
+        
+        // 定义锚点位置
+        const anchorPositions = [
+          { x: x + width / 2, y, type: 'right' },
+          { x: x - width / 2, y, type: 'left' },
+          { x, y: y - height / 2, type: 'top' },
+          { x, y: y + height / 2, type: 'bottom' }
+        ];
+        
+        // 获取节点的SVG组
+        const nodeGroup = node.querySelector('g');
+        if (!nodeGroup) return;
+        
+        // 创建锚点
+        anchorPositions.forEach(pos => {
+          // 创建SVG圆形元素
+          const anchor = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          anchor.setAttribute('cx', pos.x.toString());
+          anchor.setAttribute('cy', pos.y.toString());
+          anchor.setAttribute('r', '8');
+          anchor.setAttribute('fill', '#FFFFFF');
+          anchor.setAttribute('stroke', '#409EFF');
+          anchor.setAttribute('stroke-width', '2');
+          anchor.setAttribute('class', 'lf-node-anchor node-anchor-visible');
+          anchor.setAttribute('data-anchor-id', `${nodeId}_${pos.type}`);
+          anchor.setAttribute('data-anchor-type', pos.type);
+          anchor.style.display = 'block';
+          anchor.style.visibility = 'visible';
+          anchor.style.opacity = '1';
+          anchor.style.cursor = 'crosshair';
+          anchor.style.pointerEvents = 'auto';
+          
+          // 添加到节点组
+          nodeGroup.appendChild(anchor);
+          
+          // 添加事件监听
+          anchor.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            // 触发锚点拖拽开始事件
+            lf.graphModel.eventCenter.emit('anchor:dragstart', { 
+              nodeId, 
+              anchorType: pos.type,
+              e
+            });
+          });
+        });
+        
+        console.log(`为节点 ${nodeId} 创建了 ${anchorPositions.length} 个锚点`);
+      });
+    } catch (error) {
+      console.error('手动创建锚点失败:', error);
+    }
+  };
+  
   // 单击节点
   lf.on('node:click', (data: { data: any }) => {
     console.log('单击节点:', data);
     nodeData.value = data.data as Record<string, any>;
+    
+    // 单击节点时强制更新连接点
+    setTimeout(() => {
+      try {
+        if (data.data && data.data.id) {
+          // 强制显示连接点
+          lf.graphModel.eventCenter.emit('anchor:update', { nodeId: data.data.id });
+          // 确保节点处于选中状态
+          lf.selectElementById(data.data.id);
+          // 强制刷新画布
+          lf.graphModel.eventCenter.emit('graph:transform');
+          
+          // 手动触发连接点显示
+          const nodeModel = lf.getNodeModelById(data.data.id);
+          if (nodeModel) {
+            nodeModel.setSelected(true);
+            nodeModel.setHovered(true);
+            // 强制更新节点视图
+            lf.graphModel.eventCenter.emit('node:update', { nodeId: data.data.id });
+            
+            // 手动设置锚点可见
+            forceShowAllAnchors();
+          }
+        }
+      } catch (error) {
+        console.warn('更新连接点失败:', error);
+      }
+    }, 50);
   });
   
   // 双击节点
@@ -656,63 +997,340 @@ const setupEventListeners = (lf: any) => {
     console.log('双击节点:', data);
     nodeData.value = data.data as Record<string, any>;
     showAttribute.value = true;
+    
+    // 双击节点时也强制更新连接点
+    setTimeout(() => {
+      try {
+        if (data.data && data.data.id) {
+          lf.graphModel.eventCenter.emit('anchor:update', { nodeId: data.data.id });
+          lf.selectElementById(data.data.id);
+          
+          // 手动设置锚点可见
+          forceShowAllAnchors();
+        }
+      } catch (error) {
+        console.warn('更新连接点失败:', error);
+      }
+    }, 50);
   });
   
   // 画布点击
   lf.on('blank:click', () => {
     showAttribute.value = false;
+    
+    // 画布点击时也强制显示所有锚点
+    setTimeout(forceShowAllAnchors, 100);
   });
   
   // 连线相关事件
   lf.on('connection:success', (data: any) => {
     console.log('连线成功:', data);
+    
+    // 强制更新连接点
+    setTimeout(() => {
+      try {
+        // 获取当前画布数据
+        const graphData = lf.getGraphData();
+        // 重新渲染画布
+        lf.render(graphData);
+        
+        // 连线成功后，确保源节点和目标节点的连接点可见
+        if (data.sourceNodeId) {
+          lf.graphModel.eventCenter.emit('anchor:update', { nodeId: data.sourceNodeId });
+        }
+        if (data.targetNodeId) {
+          lf.graphModel.eventCenter.emit('anchor:update', { nodeId: data.targetNodeId });
+        }
+        
+        // 强制显示所有锚点
+        forceShowAllAnchors();
+      } catch (error) {
+        console.error('刷新画布失败:', error);
+      }
+    }, 100);
+  });
+  
+  // 开始连线事件
+  lf.on('anchor:dragstart', (data: any) => {
+    console.log('开始连线:', data);
+    // 确保连接点在拖拽过程中可见
+    lf.graphModel.eventCenter.emit('anchor:update', { nodeId: data.nodeId });
+    forceShowAllAnchors();
+  });
+  
+  // 连线拖拽中
+  lf.on('anchor:drag', (data: any) => {
+    // 连线拖拽中，确保连接点可见
+    if (data.nodeId) {
+      lf.graphModel.eventCenter.emit('anchor:update', { nodeId: data.nodeId });
+    }
+    forceShowAllAnchors();
+  });
+  
+  // 连线拖拽结束
+  lf.on('anchor:drop', (data: any) => {
+    console.log('连线拖拽结束:', data);
+    // 确保连接点在拖拽结束后可见
+    if (data.nodeId) {
+      lf.graphModel.eventCenter.emit('anchor:update', { nodeId: data.nodeId });
+    }
+    forceShowAllAnchors();
   });
   
   lf.on('connection:not-allowed', (data: any) => {
     console.log('连线被拒绝:', data);
     ElMessage.warning('连线不被允许');
+    forceShowAllAnchors();
   });
   
   // 拖拽相关事件
   lf.on('node:dragstart', (data: any) => {
     console.log('开始拖动节点:', data.id);
+    forceShowAllAnchors();
   });
   
   lf.on('node:drag', (data: any) => {
     // 节点拖动中
+    // 确保拖动过程中连接点跟随节点移动
+    if (data.id) {
+      lf.graphModel.eventCenter.emit('anchor:update', { nodeId: data.id });
+    }
+    forceShowAllAnchors();
   });
   
   lf.on('node:drop', (data: any) => {
     console.log('节点放置:', data.id);
+    
+    // 节点放置后强制更新连接点
+    setTimeout(() => {
+      try {
+        // 触发画布更新事件
+        lf.graphModel.eventCenter.emit('anchor:update', { nodeId: data.id });
+        lf.graphModel.eventCenter.emit('graph:transform');
+        
+        // 选中节点以显示连接点
+        lf.selectElementById(data.id);
+        
+        // 强制显示所有锚点
+        forceShowAllAnchors();
+      } catch (error) {
+        console.warn('更新连接点失败:', error);
+      }
+    }, 100);
   });
   
   // 画布缩放事件
   lf.on('graph:transform', () => {
-    // 画布变换
+    // 画布变换时，确保所有选中节点的连接点可见
+    const selectedElements = lf.getSelectElements();
+    if (selectedElements && selectedElements.nodes) {
+      selectedElements.nodes.forEach((node: any) => {
+        if (node.id) {
+          lf.graphModel.eventCenter.emit('anchor:update', { nodeId: node.id });
+        }
+      });
+    }
+    
+    // 强制显示所有锚点
+    forceShowAllAnchors();
   });
+  
+  // 元素选中事件
+  lf.on('element:selected', (data: any) => {
+    console.log('元素选中:', data);
+    
+    // 元素选中后强制更新连接点
+    if (data.data && data.data.id) {
+      setTimeout(() => {
+        try {
+          lf.graphModel.eventCenter.emit('anchor:update', { nodeId: data.data.id });
+          
+          // 手动触发连接点显示
+          const nodeModel = lf.getNodeModelById(data.data.id);
+          if (nodeModel) {
+            nodeModel.setSelected(true);
+            // 强制更新节点视图
+            lf.graphModel.eventCenter.emit('node:update', { nodeId: data.data.id });
+          }
+          
+          // 强制显示所有锚点
+          forceShowAllAnchors();
+        } catch (error) {
+          console.warn('更新连接点失败:', error);
+        }
+      }, 50);
+    }
+  });
+  
+  // 添加鼠标移动事件，确保锚点始终可见
+  document.addEventListener('mousemove', () => {
+    // 使用节流函数减少调用频率
+    if (!window.anchorUpdateThrottle) {
+      window.anchorUpdateThrottle = setTimeout(() => {
+        forceShowAllAnchors();
+        window.anchorUpdateThrottle = null;
+      }, 200);
+    }
+  });
+  
+  // 添加画布渲染完成事件
+  lf.on('graph:rendered', () => {
+    console.log('画布渲染完成，准备创建锚点');
+    setTimeout(forceShowAllAnchors, 100);
+    setTimeout(createMissingAnchors, 200);
+  });
+  
+  // 添加节点渲染完成事件
+  lf.on('node:add', (data: any) => {
+    console.log('节点添加完成:', data);
+    setTimeout(forceShowAllAnchors, 100);
+    setTimeout(createMissingAnchors, 200);
+  });
+  
+  // 初始化时强制显示所有锚点
+  setTimeout(forceShowAllAnchors, 500);
+  setTimeout(createMissingAnchors, 600);
+  setTimeout(forceShowAllAnchors, 1000);
+  setTimeout(createMissingAnchors, 1100);
+  setTimeout(forceShowAllAnchors, 2000);
 };
 
-onMounted(() => {
-  // 使用requestAnimationFrame确保DOM已渲染
-  window.requestAnimationFrame(() => {
-    window.requestAnimationFrame(() => {
-      // 强制浏览器重新计算布局
-      if (container.value) {
-        // 先强制读取一次布局尺寸，触发浏览器重排
-        const forceReflow = container.value.offsetHeight;
-        
-        console.log('准备初始化LogicFlow，当前容器尺寸:', {
-          width: container.value.clientWidth,
-          height: container.value.clientHeight
-        });
-        
-        // 立即初始化LogicFlow
-        initLogicFlow();
-      } else {
-        console.error('容器元素未找到');
-      }
+// 添加全局样式，确保锚点可见
+const addGlobalAnchorStyles = () => {
+  // 检查是否已存在样式
+  if (document.getElementById('lf-anchor-styles')) {
+    return;
+  }
+  
+  // 创建样式元素
+  const style = document.createElement('style');
+  style.id = 'lf-anchor-styles';
+  style.textContent = `
+    /* 直接修改SVG元素样式，确保锚点可见 */
+    circle.lf-anchor,
+    circle.lf-node-anchor,
+    circle.node-anchor-visible {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      stroke: #409EFF !important;
+      fill: #FFFFFF !important;
+      stroke-width: 2 !important;
+      r: 8 !important;
+      pointer-events: auto !important;
+      cursor: crosshair !important;
+    }
+    
+    /* 悬停样式 */
+    circle.lf-anchor:hover,
+    circle.lf-node-anchor:hover,
+    circle.node-anchor-visible:hover {
+      r: 10 !important;
+      stroke: #409EFF !important;
+      fill: #E6F7FF !important;
+      stroke-width: 3 !important;
+    }
+    
+    /* 确保所有节点状态下锚点都可见 */
+    .lf-node circle.lf-anchor,
+    .lf-node-selected circle.lf-anchor,
+    .lf-node:hover circle.lf-anchor,
+    .lf-node-hover circle.lf-anchor,
+    .lf-node circle.lf-node-anchor,
+    .lf-node-selected circle.lf-node-anchor,
+    .lf-node:hover circle.lf-node-anchor,
+    .lf-node-hover circle.lf-node-anchor {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* 确保锚点容器可见 */
+    .lf-anchor-hover,
+    .lf-anchor-group {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* 确保锚点线可见 */
+    .lf-anchor-line {
+      stroke: #409EFF !important;
+      stroke-width: 1 !important;
+      stroke-dasharray: 3,2 !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* 修复可能的CSS层叠问题 */
+    .lf-node * {
+      pointer-events: auto !important;
+    }
+    
+    /* 确保节点选中状态正确 */
+    .lf-node-selected {
+      outline: 2px dashed #409EFF !important;
+    }
+    
+    /* 直接修改SVG元素，确保锚点可见 */
+    svg circle[data-anchor-id],
+    svg circle[data-anchor-type] {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      stroke: #409EFF !important;
+      fill: #FFFFFF !important;
+      stroke-width: 2 !important;
+      r: 8 !important;
+    }
+  `;
+  
+  // 添加到文档头部
+  document.head.appendChild(style);
+  console.log('添加全局锚点样式');
+  
+  // 添加额外的样式修复
+  setTimeout(() => {
+    // 查找所有锚点并强制显示
+    const anchors = document.querySelectorAll('circle.lf-anchor, circle.lf-node-anchor, circle[data-anchor-id]');
+    anchors.forEach((anchor: any) => {
+      anchor.style.display = 'block';
+      anchor.style.visibility = 'visible';
+      anchor.style.opacity = '1';
+      anchor.style.pointerEvents = 'auto';
+      anchor.style.cursor = 'crosshair';
+      anchor.setAttribute('r', '8');
+      anchor.setAttribute('stroke', '#409EFF');
+      anchor.setAttribute('fill', '#FFFFFF');
+      anchor.setAttribute('stroke-width', '2');
     });
-  });
+    
+    console.log(`强制显示 ${anchors.length} 个锚点`);
+  }, 500);
+};
+
+onMounted(async () => {
+  // 使用更可靠的方式确保DOM已渲染
+  await nextTick();
+  
+  // 等待DOM完全渲染
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  if (container.value) {
+    // 先强制读取一次布局尺寸，触发浏览器重排
+    const forceReflow = container.value.offsetHeight;
+    
+    console.log('准备初始化LogicFlow，当前容器尺寸:', {
+      width: container.value.clientWidth,
+      height: container.value.clientHeight
+    });
+    
+    // 立即初始化LogicFlow
+    initLogicFlow();
+  } else {
+    console.error('容器元素未找到');
+  }
 });
 </script>
 
@@ -769,6 +1387,49 @@ onMounted(() => {
   height: 100%;
   position: relative;
   overflow: visible !important; // 关键：确保节点不会被裁剪
+}
+
+// 确保连接点样式正确
+:deep(.lf-anchor) {
+  stroke: #409EFF;
+  fill: #FFFFFF;
+  stroke-width: 2;
+  r: 6;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  
+  &:hover {
+    stroke: #409EFF;
+    fill: rgba(64, 158, 255, 0.2);
+    r: 8;
+  }
+}
+
+// 确保连接点在选中节点时可见
+:deep(.lf-node-selected) {
+  .lf-anchor {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
+// 全局样式覆盖，确保连接点始终可见
+:global(.lf-anchor) {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  stroke: #409EFF !important;
+  fill: #FFFFFF !important;
+  stroke-width: 2 !important;
+  r: 6 !important;
+}
+
+:global(.lf-anchor:hover) {
+  r: 8 !important;
+  stroke: #409EFF !important;
+  fill: rgba(64, 158, 255, 0.2) !important;
 }
 
 .control-panel-container {
