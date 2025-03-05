@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 
 const props = defineProps({
   iconClass: {
@@ -21,6 +21,15 @@ const props = defineProps({
 });
 
 const iconName = computed(() => `#icon-${props.iconClass}`);
+
+// 添加图标加载调试信息
+onMounted(() => {
+  // 检查图标是否存在
+  const iconExists = document.querySelector(iconName.value);
+  if (!iconExists) {
+    console.warn(`图标未找到: ${iconName.value}`);
+  }
+});
 </script>
 
 <style scoped>

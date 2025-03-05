@@ -43,7 +43,19 @@ export const registerSvgIcons = () => {
     svg.style.overflow = 'hidden';
     svg.setAttribute('aria-hidden', 'true');
     
-    document.body.insertBefore(svg, document.body.firstChild);
+    // 确保body已加载
+    if (document.body) {
+      document.body.insertBefore(svg, document.body.firstChild);
+    } else {
+      window.addEventListener('DOMContentLoaded', () => {
+        document.body.insertBefore(svg, document.body.firstChild);
+      });
+    }
+    
+    // 打印注册的图标，便于调试
+    console.log('已注册SVG图标:', Object.keys(svgFiles).map(key => key.replace('./svg/', '').replace('.svg', '')));
+  } else {
+    console.error('SVG图标注册失败');
   }
 };
 

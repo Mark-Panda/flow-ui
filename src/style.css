@@ -223,3 +223,115 @@ button:focus-visible {
   stroke: #f5222d;
   stroke-width: 2px;
 }
+
+/* 添加LogicFlow相关的全局样式 */
+.lf-container {
+  width: 100% !important;
+  height: 100% !important;
+  background-color: #f5f7fa;
+  position: relative;
+  touch-action: none; /* 防止触摸设备上的滚动问题 */
+}
+
+/* LogicFlow相关样式修复 */
+.lf-canvas-overlay {
+  cursor: default;
+  touch-action: none;
+}
+
+.lf-graph {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  touch-action: none;
+}
+
+/* 节点拖拽时的样式 */
+.lf-dragging {
+  cursor: grabbing !important;
+}
+
+/* 修复节点样式 */
+.lf-node {
+  cursor: pointer;
+  user-select: none;
+}
+
+.lf-edge {
+  cursor: pointer;
+}
+
+/* 确保元素不会溢出容器 */
+.logic-flow-view {
+  position: relative;
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  height: calc(100vh - 60px);
+  touch-action: none;
+}
+
+/* SVG图标样式修复 */
+.svg-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+  overflow: visible;
+}
+
+/* 确保节点工具栏显示在最上层 */
+.lf-tool, .lf-minimap {
+  z-index: 999 !important;
+}
+
+/* 确保SVG图标正确显示 */
+.svg-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  color: inherit;
+  vertical-align: -0.15em;
+  fill: currentColor;
+  overflow: hidden;
+}
+
+/* 确保应用和内容区域填满整个视口 */
+html, body, #app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.app-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 修复拖拽相关样式 */
+[draggable] {
+  -webkit-user-drag: element !important;
+  cursor: grab !important;
+  touch-action: none !important;
+}
+
+[draggable]:active {
+  cursor: grabbing !important;
+}
+
+/* 提高node-panel的层级 */
+.node-panel {
+  position: relative;
+  z-index: 100;
+}
+
+/* 确保拖拽时不被其他元素阻挡 */
+.lf-container {
+  position: relative !important;
+  z-index: 1;
+}

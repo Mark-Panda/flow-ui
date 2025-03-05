@@ -16,7 +16,12 @@
       <!-- 左侧节点面板 -->
       <NodePanel v-if="showLf" :lf="lf" :title="title"></NodePanel>
       <!-- 画布 -->
-      <div id="LF-view" ref="container"></div>
+      <div 
+        id="LF-view" 
+        ref="container" 
+        class="lf-container"
+        style="width: 100%; height: 100%; position: relative;"
+      ></div>
       <!-- 属性面板 -->
       <PropertyDialog 
         v-if="showAttribute" 
@@ -74,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, nextTick } from 'vue';
 import LogicFlow from '@logicflow/core';
 import { Menu, Snapshot, MiniMap } from '@logicflow/extension';
 import { ElMessage } from 'element-plus';
@@ -95,7 +100,7 @@ const props = defineProps({
 // 逻辑流实例
 let lf = ref<LogicFlow | null>(null);
 // 节点数据
-let nodeData = ref<Record<string, any> | null>(null);
+let nodeData = ref<Record<string, any> | undefined>(undefined);
 // 是否显示属性面板
 let showAttribute = ref(false);
 // 是否显示DSL对话框
@@ -114,94 +119,198 @@ let importVisible = ref(false);
 let importContent = ref('');
 
 // 初始化逻辑流
-const initLogicFlow = () => {
-  if (!container.value) return;
+const initLogicFlow = async () => {
+  // 确保DOM已经渲染完成
+  await nextTick();
   
-  // @ts-ignore - 忽略LogicFlow构造函数的类型错误
-  const logicFlow = new LogicFlow({
-    container: container.value,
-    background: {
-      backgroundColor: '#ffffff',
-    },
-    grid: {
-      size: 10,
-      visible: true,
-    },
-    keyboard: {
-      enabled: true,
-    },
-    adjustEdge: true,
-    adjustEdgeStartAndEnd: true,
-    edgeSelectedOutline: true,
-    hoverOutline: false,
-    nodeTextEdit: false,
-    edgeTextEdit: false,
-    autoExpand: true,
-    plugins: [Menu, MiniMap, Snapshot],
-  });
+  if (!container.value) {
+    console.error('容器元素不存在');
+    return;
+  }
   
-  lf.value = logicFlow;
-  showLf.value = true;
+  // 确保容器有尺寸并且已挂载到DOM
+  if (!document.body.contains(container.value)) {
+    console.error('容器元素未挂载到DOM');
+    return;
+  }
   
-  // 设置主题
-  logicFlow.setTheme({
-    baseNode: {
-      fill: '#FFFFFF',
-      stroke: '#000000',
-      strokeWidth: 1,
-    },
-    nodeText: {
-      color: '#000000',
-      overflowMode: 'ellipsis',
-      padding: '0 15px',
-      fontSize: 14,
-    },
-    edgeText: {
-      color: '#000000',
-      background: {
-        fill: '#ffffff',
-      },
-    },
-  });
+  // 获取容器尺寸信息
+  const clientWidth = container.value.clientWidth || 800;
+  const clientHeight = container.value.clientHeight || 600;
   
-  // 设置默认边类型
-  logicFlow.setDefaultEdgeType('bezier');
+  // 直接清空容器内容，准备重新创建
+  container.value.innerHTML = '';
   
-  // 注册节点和边
-  registerNodes(logicFlow);
-  registerEdges(logicFlow);
+  console.log('使用宽高:', clientWidth, clientHeight);
   
-  // 监听事件
-  logicFlow.on('element:click', ({ data }: { data: any }) => {
-    nodeData.value = data;
-    showAttribute.value = true;
-  });
-  
-  // 监听拖拽添加节点
-  logicFlow.on('drop', (data: any) => {
-    try {
-      const { type, label } = JSON.parse(data.text);
-      const { offsetX, offsetY } = data;
+  try {
+    // GitHub issue #675 解决方案：直接创建SVG元素
+    // 首先创建一个与容器相同尺寸的div
+    const lfContainer = document.createElement('div');
+    lfContainer.style.width = `${clientWidth}px`;
+    lfContainer.style.height = `${clientHeight}px`;
+    lfContainer.style.position = 'relative';
+    container.value.appendChild(lfContainer);
+    
+    // 添加拖拽事件监听器
+    lfContainer.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'copy'; // 显示为复制操作
+      }
+    });
+    
+    lfContainer.addEventListener('drop', (e) => {
+      e.preventDefault();
+      console.log('原生drop事件触发', e);
       
-      // 添加节点
-      logicFlow.addNode({
-        type,
-        x: offsetX,
-        y: offsetY,
-        text: label,
-        properties: {
-          name: label,
-          desc: `${label}节点`,
-          frontend_status: '1',
+      // 手动处理拖拽数据
+      try {
+        const dataTransfer = e.dataTransfer;
+        if (!dataTransfer) {
+          console.error('无效的dataTransfer对象');
+          return;
+        }
+        
+        let data = null;
+        
+        // 尝试不同的数据格式
+        if (dataTransfer.types.includes('application/logicflow')) {
+          data = JSON.parse(dataTransfer.getData('application/logicflow'));
+        } else if (dataTransfer.types.includes('application/json')) {
+          data = JSON.parse(dataTransfer.getData('application/json'));
+        } else if (dataTransfer.types.includes('text/plain')) {
+          data = JSON.parse(dataTransfer.getData('text/plain'));
+        }
+        
+        if (data && data.type && data.label) {
+          console.log('成功解析拖拽数据:', data);
+          
+          // 手动添加节点
+          const rect = lfContainer.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          // 添加节点
+          logicFlow.addNode({
+            type: data.type,
+            x,
+            y,
+            text: data.label,
+            properties: {
+              name: data.label,
+              desc: `${data.label}节点`,
+              frontend_status: '1',
+            },
+          });
+          
+          // 成功消息
+          ElMessage.success(`成功添加${data.label}节点`);
+        } else {
+          console.error('拖拽数据格式不正确:', dataTransfer.types);
+        }
+      } catch (err) {
+        console.error('处理拖拽数据失败:', err);
+        ElMessage.error('添加节点失败');
+      }
+    });
+    
+    // @ts-ignore - 忽略LogicFlow构造函数的类型错误
+    const logicFlow = new LogicFlow({
+      container: lfContainer,
+      width: clientWidth,
+      height: clientHeight,
+      background: {
+        backgroundColor: '#ffffff',
+      },
+      grid: {
+        size: 10,
+        visible: true,
+      },
+      keyboard: {
+        enabled: true,
+      },
+      adjustEdge: true,
+      adjustEdgeStartAndEnd: true,
+      edgeSelectedOutline: true,
+      hoverOutline: false,
+      nodeTextEdit: false,
+      edgeTextEdit: false,
+      autoExpand: true,
+      stopScrollGraph: true, // 禁止画布自动滚动
+      stopZoomGraph: false,  // 允许缩放
+      // 启用拖拽创建功能
+      plugins: [Menu, MiniMap, Snapshot],
+    });
+    
+    // 修复逻辑：手动调整画布大小，强制重新渲染
+    setTimeout(() => {
+      try {
+        if (logicFlow) {
+          console.log('正在重新调整画布大小...');
+          logicFlow.resize(clientWidth, clientHeight);
+          
+          // 允许拖放
+          logicFlow.extension.dndPanel = {
+            enable: true,
+          };
+        }
+      } catch (err) {
+        console.error('重新调整画布大小失败:', err);
+      }
+    }, 200);
+    
+    lf.value = logicFlow;
+    showLf.value = true;
+    
+    // 设置主题
+    logicFlow.setTheme({
+      baseNode: {
+        fill: '#FFFFFF',
+        stroke: '#000000',
+        strokeWidth: 1,
+      },
+      nodeText: {
+        color: '#000000',
+        overflowMode: 'ellipsis',
+        padding: '0 15px',
+        fontSize: 14,
+      },
+      edgeText: {
+        color: '#000000',
+        background: {
+          fill: '#ffffff',
         },
-      });
-    } catch (e) {
-      console.error('拖拽添加节点失败:', e);
-    }
-  });
-  
-  // 渲染初始数据
-  renderInitialData();
+      },
+    });
+    
+    // 设置默认边类型
+    logicFlow.setDefaultEdgeType('bezier');
+    
+    // 注册节点和边
+    registerNodes(logicFlow);
+    registerEdges(logicFlow);
+    
+    // 监听事件
+    logicFlow.on('element:click', ({ data }: { data: any }) => {
+      nodeData.value = data;
+      showAttribute.value = true;
+    });
+    
+    // 画布容器的点击事件，用于隐藏属性面板
+    container.value.addEventListener('click', (e) => {
+      // 确保点击的不是节点
+      if ((e.target as HTMLElement).closest('.lf-node') === null) {
+        showAttribute.value = false;
+      }
+    });
+    
+    // 渲染初始数据
+    renderInitialData();
+  } catch (e) {
+    console.error('初始化LogicFlow失败:', e);
+    console.error('错误详情:', e instanceof Error ? e.message : String(e));
+  }
 };
 
 // 渲染初始数据
@@ -452,7 +561,26 @@ const loadDemo = () => {
 };
 
 onMounted(() => {
-  initLogicFlow();
+  // 使用requestAnimationFrame确保DOM已渲染
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      // 强制浏览器重新计算布局
+      if (container.value) {
+        // 先强制读取一次布局尺寸，触发浏览器重排
+        const forceReflow = container.value.offsetHeight;
+        
+        console.log('准备初始化LogicFlow，当前容器尺寸:', {
+          width: container.value.clientWidth,
+          height: container.value.clientHeight
+        });
+        
+        // 立即初始化LogicFlow
+        initLogicFlow();
+      } else {
+        console.error('容器元素未找到');
+      }
+    });
+  });
 });
 </script>
 
@@ -488,11 +616,17 @@ onMounted(() => {
   flex: 1;
   position: relative;
   display: flex;
+  width: 100%;
+  height: calc(100vh - 60px); /* 减去顶部工具栏的高度 */
+  overflow: hidden;
 }
 
 #LF-view {
   flex: 1;
   height: 100%;
+  position: relative;
+  min-width: 600px;
+  min-height: 400px;
 }
 
 .control-panel-container {

@@ -10,6 +10,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 // 注册SVG图标
 registerSvgIcons()
+console.log('SVG图标注册完成')
 
 // 创建路由
 const router = createRouter({
@@ -24,6 +25,14 @@ const router = createRouter({
 })
 
 const app = createApp(App)
+
+// 全局错误处理
+app.config.errorHandler = (err, instance, info) => {
+  console.error('全局错误:', err)
+  console.error('错误组件:', instance)
+  console.error('错误信息:', info)
+}
+
 app.use(ElementPlus)
 app.use(router) // 使用路由
 app.mount('#app')

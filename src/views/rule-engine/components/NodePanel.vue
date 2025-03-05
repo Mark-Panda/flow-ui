@@ -71,7 +71,49 @@ const nodeList = ref([
 // 拖拽开始
 const onDragStart = (e: DragEvent, node: any) => {
   if (e.dataTransfer) {
-    e.dataTransfer.setData('text/plain', JSON.stringify(node));
+    // 设置拖拽效果，必须包含"copy"或"move"
+    e.dataTransfer.effectAllowed = 'copyMove';
+    
+    // 使用更简洁的数据格式
+    const dragData = {
+      type: node.type,
+      label: node.label
+    };
+    
+    // 设置多种数据格式，确保兼容性
+    const jsonString = JSON.stringify(dragData);
+    e.dataTransfer.setData('text/plain', jsonString);
+    e.dataTransfer.setData('application/json', jsonString);
+    // 添加额外的兼容格式
+    e.dataTransfer.setData('application/logicflow', jsonString);
+    
+    // 创建拖拽图像（临时元素）
+    const dragImage = document.createElement('div');
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-1000px';
+    dragImage.style.padding = '10px';
+    dragImage.style.background = '#409eff';
+    dragImage.style.color = 'white';
+    dragImage.style.borderRadius = '4px';
+    dragImage.style.pointerEvents = 'none';
+    dragImage.style.zIndex = '9999';
+    dragImage.style.opacity = '0.85';
+    dragImage.innerHTML = node.label;
+    document.body.appendChild(dragImage);
+    
+    try {
+      // 设置拖拽图像
+      e.dataTransfer.setDragImage(dragImage, 20, 20);
+    } catch (error) {
+      console.error('设置拖拽图像失败:', error);
+    }
+    
+    // 延迟移除临时元素
+    setTimeout(() => {
+      document.body.removeChild(dragImage);
+    }, 100);
+    
+    console.log('开始拖拽节点:', node.type, '数据:', jsonString);
   }
 };
 </script>
