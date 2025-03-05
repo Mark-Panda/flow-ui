@@ -78,6 +78,9 @@ export default function registerBaseNode(lf: any) {
             y,
             id: `${id}_right`,
             type: 'right',
+            edgeAddable: true,  // 允许添加边
+            nodeAddable: false, // 禁止添加节点
+            className: 'node-anchor'  // 添加自定义类名
           },
           // 左侧连接点
           {
@@ -85,6 +88,9 @@ export default function registerBaseNode(lf: any) {
             y,
             id: `${id}_left`,
             type: 'left',
+            edgeAddable: true,  // 允许添加边
+            nodeAddable: false, // 禁止添加节点
+            className: 'node-anchor'  // 添加自定义类名
           },
         ];
       }

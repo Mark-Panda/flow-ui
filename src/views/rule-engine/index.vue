@@ -230,16 +230,21 @@ const initLogicFlow = async () => {
       keyboard: {
         enabled: true,
       },
-      adjustEdge: true,
-      adjustEdgeStartAndEnd: true,
-      edgeSelectedOutline: true,
+      // 禁用边调整功能，避免拖动边框效果
+      adjustEdge: false,
+      adjustEdgeStartAndEnd: false,
+      // 禁用边选中和悬停效果
+      edgeSelectedOutline: false,
       hoverOutline: false,
       nodeTextEdit: false,
       edgeTextEdit: false,
-      autoExpand: true,
+      // 禁用缩放和自动扩展
+      autoExpand: false,  // 改为false避免画布自动扩展
       stopScrollGraph: true, // 禁止画布自动滚动
       stopZoomGraph: false,  // 允许缩放
-      // 启用拖拽创建功能
+      // 移除节点选中阴影效果
+      nodeSelectedOutline: false,
+      // 启用插件
       plugins: [Menu, MiniMap, Snapshot],
     });
     
@@ -291,16 +296,29 @@ const initLogicFlow = async () => {
     registerNodes(logicFlow);
     registerEdges(logicFlow);
     
-    // 监听事件
-    logicFlow.on('element:click', ({ data }: { data: any }) => {
-      nodeData.value = data;
+    // 修改节点点击事件，只记录选中节点，不显示属性面板
+    logicFlow.on('node:click', (data: { data: any }) => {
+      console.log('Node clicked:', data);
+      nodeData.value = data.data as Record<string, any>;
+      // 不再自动显示属性面板
+      // showAttribute.value = true;
+    });
+    
+    // 添加双击事件，显示属性面板
+    logicFlow.on('node:dbclick', (data: { data: any }) => {
+      console.log('Node double clicked:', data);
+      nodeData.value = data.data as Record<string, any>;
       showAttribute.value = true;
     });
     
-    // 画布容器的点击事件，用于隐藏属性面板
-    container.value.addEventListener('click', (e) => {
-      // 确保点击的不是节点
-      if ((e.target as HTMLElement).closest('.lf-node') === null) {
+    // 添加画布点击事件，点击空白处隐藏属性面板
+    lfContainer.addEventListener('click', (e) => {
+      // 判断点击的是否为画布空白处（非节点区域）
+      const target = e.target as Element;
+      // 如果点击的是画布本身或其直接子元素（非节点），则隐藏属性面板
+      if (target.classList.contains('lf-canvas') || 
+          target.classList.contains('lf-graph') ||
+          target.classList.contains('lf-background')) {
         showAttribute.value = false;
       }
     });

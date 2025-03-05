@@ -55,6 +55,9 @@ export default function registerStartParallel(lf: any) {
             y,
             id: `${id}_right`,
             type: 'right',
+            edgeAddable: true,
+            nodeAddable: false,
+            className: 'node-anchor'
           },
           // 左侧连接点
           {
@@ -62,6 +65,9 @@ export default function registerStartParallel(lf: any) {
             y,
             id: `${id}_left`,
             type: 'left',
+            edgeAddable: true,
+            nodeAddable: false,
+            className: 'node-anchor'
           },
         ];
       }

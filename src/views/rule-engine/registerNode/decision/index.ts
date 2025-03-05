@@ -81,6 +81,9 @@ export default function registerDecision(lf: any) {
             y,
             id: `${id}_right`,
             type: 'right',
+            edgeAddable: true,
+            nodeAddable: false,
+            className: 'node-anchor'
           },
           // 左侧连接点
           {
@@ -88,6 +91,9 @@ export default function registerDecision(lf: any) {
             y,
             id: `${id}_left`,
             type: 'left',
+            edgeAddable: true,
+            nodeAddable: false,
+            className: 'node-anchor'
           },
         ];
       }

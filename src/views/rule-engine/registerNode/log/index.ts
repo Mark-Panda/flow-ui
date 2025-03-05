@@ -62,12 +62,18 @@ export default function registerLog(lf: any) {
             y,
             id: `${id}_right`,
             type: 'right',
+            edgeAddable: true,
+            nodeAddable: false,
+            className: 'node-anchor'
           },
           {
             x: x - width / 2,
             y,
             id: `${id}_left`,
             type: 'left',
+            edgeAddable: true,
+            nodeAddable: false,
+            className: 'node-anchor'
           },
         ];
       }

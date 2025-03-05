@@ -174,9 +174,23 @@ button:focus-visible {
   cursor: pointer;
 }
 
-/* LogicFlow节点选中状态 */
+/* LogicFlow节点选中状态（移除轮廓线，改用其他不那么明显的方式表示选中状态） */
 .lf-node-selected {
-  outline: 2px solid #409eff;
+  outline: none !important;
+  filter: brightness(1.05);
+  box-shadow: none !important;
+}
+
+/* 自定义选中样式，更加微妙的效果 */
+.lf-node-selected .node-anchor {
+  fill: rgba(64, 158, 255, 0.1) !important;
+  stroke: #409eff !important;
+}
+
+/* 微调选中节点连接点的样式 */
+.lf-node-selected .lf-anchor {
+  fill: rgba(24, 144, 255, 0.2);
+  stroke: rgba(24, 144, 255, 0.5);
 }
 
 /* 覆盖Element Plus样式 */
@@ -334,4 +348,65 @@ html, body, #app {
 .lf-container {
   position: relative !important;
   z-index: 1;
+}
+
+/* 禁用连接点的拖动效果 */
+.lf-anchor {
+  cursor: crosshair !important;
+  stroke: transparent !important;
+  fill: transparent !important;
+  stroke-width: 1 !important;
+}
+
+.lf-anchor:hover {
+  stroke: #409eff !important;
+  fill: #fff !important;
+  fill-opacity: 0.5 !important;
+  stroke-width: 1 !important;
+}
+
+/* 隐藏活动边缘 */
+.lf-edge-append,
+.lf-edge-adjust {
+  display: none !important;
+}
+
+/* 禁用拖动边框效果 */
+.lf-anchor-hover {
+  stroke: #409eff !important;
+  fill: #fff !important;
+}
+
+/* 连线预览样式 */
+.lf-drag-edge {
+  stroke: #409eff !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 5 5 !important;
+}
+
+/* 节点锚点/连接点样式 */
+.node-anchor {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 1;
+  r: 4;  /* 连接点半径 */
+  transition: all 0.3s;
+}
+
+.node-anchor:hover {
+  fill: #fff;
+  stroke: #409eff;
+  stroke-width: 1;
+  r: 6;  /* 悬停时稍微变大 */
+}
+
+/* 连线路径优化 */
+.lf-polyline-edge, .lf-line-edge, .lf-bezier-edge {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 修复边缘调整控制点的样式 */
+.lf-edge-adjust-point {
+  display: none !important;
 }
