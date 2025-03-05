@@ -56,12 +56,18 @@ export default function registerDecision(lf: any) {
       constructor(data: any, graphModel: any) {
         super(data, graphModel);
         this.type = 'decision';
+        // 设置固定大小
+        this.width = 120;
+        this.height = 60;
+        // 禁用大小调整
+        this.resizable = false;
+        
         // 节点的默认属性
         this.properties = {
-          name: '条件',
+          name: '判断',
           desc: '条件判断节点',
-          frontend_status: '1',
           condition: '',
+          frontend_status: '1',
           ...this.properties,
         };
       }
@@ -69,24 +75,14 @@ export default function registerDecision(lf: any) {
       getDefaultAnchor() {
         const { id, x, y, width, height } = this;
         return [
-          {
-            x,
-            y: y - height / 2,
-            id: `${id}_top`,
-            type: 'top',
-          },
+          // 右侧连接点
           {
             x: x + width / 2,
             y,
             id: `${id}_right`,
             type: 'right',
           },
-          {
-            x,
-            y: y + height / 2,
-            id: `${id}_bottom`,
-            type: 'bottom',
-          },
+          // 左侧连接点
           {
             x: x - width / 2,
             y,

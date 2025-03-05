@@ -47,8 +47,12 @@ export default function registerBaseNode(lf: any) {
     class CustomBaseNodeModel extends RectNodeModel {
       constructor(data: any, graphModel: any) {
         super(data, graphModel);
+        // 设置固定的节点大小
         this.width = 120;
         this.height = 60;
+        
+        // 禁用大小调整
+        this.resizable = false;
       }
       
       getNodeStyle() {
@@ -62,6 +66,27 @@ export default function registerBaseNode(lf: any) {
         const style = super.getTextStyle();
         style.fontSize = 14;
         return style;
+      }
+      
+      // 重写连接点方法，只保留左右两侧的连接点
+      getDefaultAnchor() {
+        const { id, x, y, width, height } = this;
+        return [
+          // 右侧连接点
+          {
+            x: x + width / 2,
+            y,
+            id: `${id}_right`,
+            type: 'right',
+          },
+          // 左侧连接点
+          {
+            x: x - width / 2,
+            y,
+            id: `${id}_left`,
+            type: 'left',
+          },
+        ];
       }
     }
     
@@ -77,5 +102,6 @@ declare module '@logicflow/core' {
   interface RectNodeModel {
     width: number;
     height: number;
+    resizable: boolean;
   }
 } 

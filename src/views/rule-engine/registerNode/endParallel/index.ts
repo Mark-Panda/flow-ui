@@ -30,10 +30,16 @@ export default function registerEndParallel(lf: any) {
       constructor(data: any, graphModel: any) {
         super(data, graphModel);
         this.type = 'endParallel';
+        // 设置固定大小
+        this.width = 120;
+        this.height = 60;
+        // 禁用大小调整
+        this.resizable = false;
+        
         // 节点的默认属性
         this.properties = {
           name: '并行结束',
-          desc: '并行执行结束节点',
+          desc: '并行流程结束节点',
           frontend_status: '1',
           ...this.properties,
         };
@@ -42,24 +48,14 @@ export default function registerEndParallel(lf: any) {
       getDefaultAnchor() {
         const { id, x, y, width, height } = this;
         return [
-          {
-            x,
-            y: y - height / 2,
-            id: `${id}_top`,
-            type: 'top',
-          },
+          // 右侧连接点
           {
             x: x + width / 2,
             y,
             id: `${id}_right`,
             type: 'right',
           },
-          {
-            x,
-            y: y + height / 2,
-            id: `${id}_bottom`,
-            type: 'bottom',
-          },
+          // 左侧连接点
           {
             x: x - width / 2,
             y,

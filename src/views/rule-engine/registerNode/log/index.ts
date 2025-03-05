@@ -28,11 +28,13 @@ export default function registerLog(lf: any) {
         this.type = 'log';
         this.width = 120;
         this.height = 60;
+        this.resizable = false;
         
         // 节点的默认属性
         this.properties = {
           name: '日志',
           desc: '日志输出节点',
+          template: '',
           frontend_status: '1',
           logContent: '',
           logLevel: 'info',
@@ -56,22 +58,10 @@ export default function registerLog(lf: any) {
         const { id, x, y, width, height } = this;
         return [
           {
-            x,
-            y: y - height / 2,
-            id: `${id}_top`,
-            type: 'top',
-          },
-          {
             x: x + width / 2,
             y,
             id: `${id}_right`,
             type: 'right',
-          },
-          {
-            x,
-            y: y + height / 2,
-            id: `${id}_bottom`,
-            type: 'bottom',
           },
           {
             x: x - width / 2,
