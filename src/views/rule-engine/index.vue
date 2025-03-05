@@ -5,6 +5,7 @@
       <div class="title">{{ title }}</div>
       <div class="actions">
         <el-button type="primary" @click="showDSL">查看DSL</el-button>
+        <el-button type="primary" @click="showJsonDSL">查看JSON DSL</el-button>
         <el-button type="warning" @click="importDSL">导入DSL</el-button>
         <el-button type="info" @click="loadDemo">导入示例</el-button>
         <el-button type="success" @click="saveDSL">保存</el-button>
@@ -51,6 +52,25 @@
         </template>
       </el-dialog>
       
+      <!-- JSON DSL预览对话框 -->
+      <el-dialog
+        v-model="jsonDslVisible"
+        title="JSON格式规则引擎DSL"
+        width="60%"
+      >
+        <div class="dsl-preview-container">
+          <pre class="dsl-preview" v-html="formattedJsonDSL"></pre>
+        </div>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="jsonDslVisible = false">关闭</el-button>
+            <el-button type="primary" @click="copyJsonDSL">
+              复制
+            </el-button>
+          </span>
+        </template>
+      </el-dialog>
+      
       <!-- DSL导入对话框 -->
       <el-dialog
         v-model="importVisible"
@@ -85,7 +105,7 @@ import { ref, onMounted, reactive, nextTick, computed } from 'vue';
 import LogicFlow from '@logicflow/core';
 import { Menu, Snapshot, MiniMap } from '@logicflow/extension';
 import { ElMessage } from 'element-plus';
-import { convertToDSL, convertFromDSL } from '@/utils/index';
+import { convertToDSL, convertFromDSL, convertDSLToJson, convertJsonToDSL } from '@/utils/index';
 import { v4 as uuidv4 } from 'uuid';
 import Control from './components/Control.vue';
 import NodePanel from './components/NodePanel.vue';
@@ -115,8 +135,12 @@ let nodeData = ref<Record<string, any> | undefined>(undefined);
 let showAttribute = ref(false);
 // 是否显示DSL对话框
 let dslVisible = ref(false);
+// 是否显示JSON DSL对话框
+let jsonDslVisible = ref(false);
 // DSL数据
 let dslData = ref<any>(null);
+// JSON DSL数据
+let jsonDslData = ref<any>(null);
 // 流程详情
 let flowDetail = reactive<Record<string, any>>({});
 // 容器引用
@@ -136,6 +160,17 @@ const formattedDSL = computed(() => {
   } catch (e) {
     console.error('DSL格式化错误:', e);
     return JSON.stringify(dslData.value);
+  }
+});
+
+// 格式化后的JSON DSL数据
+const formattedJsonDSL = computed(() => {
+  if (!jsonDslData.value) return '';
+  try {
+    return formatJSON(JSON.stringify(jsonDslData.value, null, 2));
+  } catch (e) {
+    console.error('JSON DSL格式化错误:', e);
+    return JSON.stringify(jsonDslData.value);
   }
 });
 
@@ -475,11 +510,48 @@ const renderInitialData = () => {
 
 // 显示DSL
 const showDSL = () => {
-  if (!lf.value) return;
+  if (!lf.value) {
+    ElMessage.error('逻辑流实例未初始化');
+    return;
+  }
   
   const data = lf.value.getGraphData();
   dslData.value = convertToDSL(data);
   dslVisible.value = true;
+};
+
+// 显示JSON格式DSL
+const showJsonDSL = () => {
+  if (!lf.value) {
+    ElMessage.error('逻辑流实例未初始化');
+    return;
+  }
+  
+  try {
+    const data = lf.value.getGraphData();
+    if (!data || !data.nodes) {
+      ElMessage.warning('画布为空或数据无效');
+      return;
+    }
+    
+    const dsl = convertToDSL(data);
+    if (!dsl) {
+      ElMessage.warning('DSL转换失败');
+      return;
+    }
+    
+    const jsonDsl = convertDSLToJson(dsl);
+    if (!jsonDsl) {
+      ElMessage.warning('JSON DSL转换失败');
+      return;
+    }
+    
+    jsonDslData.value = jsonDsl;
+    jsonDslVisible.value = true;
+  } catch (error) {
+    console.error('显示JSON DSL错误:', error);
+    ElMessage.error('转换JSON DSL失败');
+  }
 };
 
 // 导入DSL
@@ -490,34 +562,78 @@ const importDSL = () => {
 
 // 确认导入
 const confirmImport = () => {
-  if (!importContent.value || !lf.value) {
-    ElMessage.warning('请输入有效的DSL内容');
+  if (!importContent.value) {
+    ElMessage.warning('请输入DSL内容');
     return;
   }
   
   try {
-    const dslObj = JSON.parse(importContent.value);
-    const graphData = convertFromDSL(dslObj);
-    lf.value.render(graphData);
+    // 尝试解析JSON
+    const jsonData = JSON.parse(importContent.value);
+    
+    // 判断是否为JSON格式的DSL
+    if (jsonData.nodes && jsonData.connections) {
+      // 转换为LogicFlow格式
+      const lfData = convertJsonToDSL(jsonData);
+      if (lfData && lf.value) {
+        lf.value.render(lfData);
+        ElMessage.success('JSON DSL导入成功');
+      } else {
+        ElMessage.error('JSON DSL转换失败');
+      }
+    } else {
+      // 尝试作为普通DSL导入
+      const lfData = convertFromDSL(jsonData);
+      if (lfData && lf.value) {
+        lf.value.render(lfData);
+        ElMessage.success('DSL导入成功');
+      } else {
+        ElMessage.error('DSL转换失败');
+      }
+    }
+    
     importVisible.value = false;
-    ElMessage.success('DSL导入成功');
+    importContent.value = '';
   } catch (e) {
-    console.error('DSL导入错误:', e);
-    ElMessage.error('DSL格式错误，请检查内容');
+    console.error('导入DSL错误:', e);
+    ElMessage.error('DSL格式错误，请检查输入');
   }
 };
 
-// 复制DSL
+// 复制DSL到剪贴板
 const copyDSL = () => {
-  if (!dslData.value) return;
+  if (!dslData.value) {
+    ElMessage.error('没有可复制的DSL数据');
+    return;
+  }
   
-  const dslString = JSON.stringify(dslData.value, null, 2);
-  navigator.clipboard.writeText(dslString).then(() => {
-    ElMessage.success('DSL已复制到剪贴板');
-    dslVisible.value = false;
-  }).catch(() => {
-    ElMessage.error('复制失败');
-  });
+  const dslText = JSON.stringify(dslData.value, null, 2);
+  navigator.clipboard.writeText(dslText)
+    .then(() => {
+      ElMessage.success('DSL已复制到剪贴板');
+    })
+    .catch(err => {
+      console.error('复制失败:', err);
+      ElMessage.error('复制失败');
+    });
+};
+
+// 复制JSON DSL到剪贴板
+const copyJsonDSL = () => {
+  if (!jsonDslData.value) {
+    ElMessage.error('没有可复制的JSON DSL数据');
+    return;
+  }
+  
+  const jsonDslText = JSON.stringify(jsonDslData.value, null, 2);
+  navigator.clipboard.writeText(jsonDslText)
+    .then(() => {
+      ElMessage.success('JSON DSL已复制到剪贴板');
+    })
+    .catch(err => {
+      console.error('复制失败:', err);
+      ElMessage.error('复制失败');
+    });
 };
 
 // 保存DSL
@@ -1410,154 +1526,93 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .app-container {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden; // 防止出现滚动条
+  overflow: hidden;
 }
 
 .top-toolbar {
-  height: 60px;
+  height: 50px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 20px;
-  background-color: #fff;
-  border-bottom: 1px solid #dcdfe6;
-  
-  .title {
-    font-size: 18px;
-    font-weight: bold;
-  }
-  
-  .actions {
-    display: flex;
-    gap: 10px;
-  }
+  background-color: #f5f7fa;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
 }
 
 .logic-flow-view {
   flex: 1;
   position: relative;
-  display: flex;
-  width: 100%;
-  height: calc(100vh - 60px); /* 减去顶部工具栏的高度 */
   overflow: hidden;
-}
-
-#LF-view {
-  flex: 1;
-  height: 100%;
-  position: relative;
-  min-width: 600px;
-  min-height: 400px;
-  overflow: hidden; // 防止容器出现滚动条
-}
-
-// 确保 LogicFlow 容器样式
-:deep(.lf-graph) {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  overflow: visible !important; // 关键：确保节点不会被裁剪
-}
-
-// 确保连接点样式正确
-:deep(.lf-anchor) {
-  stroke: #409EFF;
-  fill: #FFFFFF;
-  stroke-width: 2;
-  r: 6;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  
-  &:hover {
-    stroke: #409EFF;
-    fill: rgba(64, 158, 255, 0.2);
-    r: 8;
-  }
-}
-
-// 确保连接点在选中节点时可见
-:deep(.lf-node-selected) {
-  .lf-anchor {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-}
-
-// 全局样式覆盖，确保连接点始终可见
-:global(.lf-anchor) {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  stroke: #409EFF !important;
-  fill: #FFFFFF !important;
-  stroke-width: 2 !important;
-  r: 6 !important;
-}
-
-:global(.lf-anchor:hover) {
-  r: 8 !important;
-  stroke: #409EFF !important;
-  fill: rgba(64, 158, 255, 0.2) !important;
 }
 
 .control-panel-container {
   position: absolute;
   top: 10px;
   right: 10px;
-  z-index: 2;
+  z-index: 10;
+}
+
+.lf-container {
+  width: 100%;
+  height: 100%;
 }
 
 .dsl-preview-container {
-  position: relative;
-  max-height: 500px;
+  max-height: 60vh;
   overflow: auto;
+  background-color: #f8f8f8;
   border-radius: 4px;
-  border: 1px solid #e0e0e0;
+  padding: 10px;
 }
 
 .dsl-preview {
-  background-color: #f5f7fa;
-  padding: 15px;
-  border-radius: 4px;
-  overflow: auto;
+  margin: 0;
   white-space: pre-wrap;
+  word-break: break-all;
   font-family: 'Courier New', Courier, monospace;
   font-size: 14px;
   line-height: 1.5;
-  color: #333;
-  counter-reset: line;
 }
 
-.dsl-preview .json-key {
-  color: #0b6125;
+/* JSON语法高亮样式 */
+:deep(.json-key) {
+  color: #0451a5;
   font-weight: bold;
 }
 
-.dsl-preview .json-value {
-  color: #1a1aa6;
-}
-
-.dsl-preview .json-string {
+:deep(.json-string) {
   color: #a31515;
 }
 
-.dsl-preview .json-number {
+:deep(.json-number) {
   color: #098658;
 }
 
-.dsl-preview .json-boolean {
+:deep(.json-boolean) {
   color: #0000ff;
 }
 
-.dsl-preview .json-null {
+:deep(.json-null) {
   color: #0000ff;
+}
+
+:deep(.json-value) {
+  color: #000000;
 }
 </style> 
