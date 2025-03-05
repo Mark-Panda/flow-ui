@@ -1,0 +1,35 @@
+// 颜色变量
+$primaryColor: #409EFF;
+$successColor: #67C23A;
+$warningColor: #E6A23C;
+$dangerColor: #F56C6C;
+$infoColor: #909399;
+
+// 背景颜色
+$pageBgColor: #f5f7fa;
+$dragPanelBgColor: #ffffff;
+
+// 边框颜色
+$borderColor: #DCDFE6;
+$dragNodeBorderColor: #DCDFE6;
+
+// 错误颜色
+$errorColor: #F56C6C;
+
+// 圆角
+$appRadius: 4px;
+
+// 导出变量
+:export {
+  primaryColor: $primaryColor;
+  successColor: $successColor;
+  warningColor: $warningColor;
+  dangerColor: $dangerColor;
+  infoColor: $infoColor;
+  pageBgColor: $pageBgColor;
+  dragPanelBgColor: $dragPanelBgColor;
+  borderColor: $borderColor;
+  dragNodeBorderColor: $dragNodeBorderColor;
+  errorColor: $errorColor;
+  appRadius: $appRadius;
+} 

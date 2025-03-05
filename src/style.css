@@ -1,0 +1,225 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(0, 0, 0, 0.87);
+  background-color: #f5f7fa;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+.card {
+  padding: 2em;
+}
+
+#app {
+  width: 100%;
+  height: 100vh;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.app-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.logic-flow-view {
+  flex: 1;
+  position: relative;
+  display: flex;
+  background-color: #f5f7fa;
+}
+
+#LF-view {
+  flex: 1;
+  height: 100%;
+}
+
+.mt15 {
+  margin-top: 15px;
+}
+
+.mb15 {
+  margin-bottom: 15px;
+}
+
+.ml15 {
+  margin-left: 15px;
+}
+
+.mr15 {
+  margin-right: 15px;
+}
+
+.p15 {
+  padding: 15px;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+/* 自定义LogicFlow节点样式 */
+.lf-node-start {
+  cursor: pointer;
+}
+
+.lf-node-log {
+  cursor: pointer;
+}
+
+.lf-node-assignment {
+  cursor: pointer;
+}
+
+.lf-node-decision {
+  cursor: pointer;
+}
+
+.lf-node-startParallel {
+  cursor: pointer;
+}
+
+.lf-node-endParallel {
+  cursor: pointer;
+}
+
+/* LogicFlow节点选中状态 */
+.lf-node-selected {
+  outline: 2px solid #409eff;
+}
+
+/* 覆盖Element Plus样式 */
+.el-drawer__header {
+  margin-bottom: 0;
+  border-bottom: 1px solid #dcdfe6;
+  padding: 15px 20px;
+  background-color: #f5f7fa;
+  font-weight: bold;
+  color: #409eff;
+}
+
+.el-drawer__body {
+  padding: 0;
+}
+
+.el-form--small .el-form-item__label {
+  font-weight: 500;
+}
+
+.el-tooltip__trigger:focus-visible {
+  outline: none;
+}
+
+/* 修复minimap样式 */
+.lf-mini-map {
+  right: 10px;
+  bottom: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 连线样式 */
+.lf-edge-default {
+  stroke: #1890ff;
+  stroke-width: 2px;
+}
+
+.lf-edge-success {
+  stroke: #52c41a;
+  stroke-width: 2px;
+}
+
+.lf-edge-fail {
+  stroke: #f5222d;
+  stroke-width: 2px;
+}
