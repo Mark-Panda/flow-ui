@@ -14,7 +14,7 @@ export default function registerDecision(lf: any) {
           stroke: '#FF0000',
           strokeWidth: 2,
         } : {
-          stroke: '#1890FF',
+          stroke: '#F56C6C', // 红色边框
           strokeWidth: 2,
         };
         
@@ -27,19 +27,19 @@ export default function registerDecision(lf: any) {
         // 使用h函数创建矩形
         return h('rect', {
           ...style,
-          fill: '#FFFFFF',
+          fill: '#FEF0F0', // 浅红色背景
           width: safeWidth,
           height: safeHeight,
           x: safeX - safeWidth / 2,
           y: safeY - safeHeight / 2,
-          rx: 4,
-          ry: 4,
+          rx: 10, // 圆角
+          ry: 10,
         });
       }
       
       getIcon() {
         const { x, y, width, height, properties } = this.props.model;
-        const iconColor = properties.frontend_status === '0' ? '#FF0000' : '#1890FF';
+        const iconColor = properties.frontend_status === '0' ? '#FF0000' : '#F56C6C';
         
         // 确保x和y是有效数值
         const safeX = isNaN(x) ? 0 : x;
@@ -80,10 +80,11 @@ export default function registerDecision(lf: any) {
         
         // 使用简单的文本元素替代foreignObject
         return h('text', {
-          x: safeX + 15,
+          x: safeX + 35,
           y: safeY + 5,
           fill: textColor,
           fontSize: 14,
+          fontWeight: 'bold',
           textAnchor: 'start',
           dominantBaseline: 'middle',
         }, textValue);

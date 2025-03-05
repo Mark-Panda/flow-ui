@@ -17,12 +17,17 @@ export default function registerBezier(lf: any) {
         const style = super.getEdgeStyle();
         const { edgeType } = this.properties;
         
+        // 设置基本样式
+        style.strokeWidth = 2;
+        style.strokeDasharray = ''; // 实线
+        
+        // 根据边类型设置不同颜色
         if (edgeType === 'success') {
           style.stroke = '#67C23A';
         } else if (edgeType === 'fail') {
           style.stroke = '#F56C6C';
         } else {
-          style.stroke = '#409EFF';
+          style.stroke = '#909399'; // 灰色，与图片中的效果一致
         }
         
         return style;

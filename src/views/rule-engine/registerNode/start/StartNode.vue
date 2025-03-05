@@ -32,9 +32,9 @@ defineProps({
   width: 140px;
   height: 40px;
   line-height: 40px;
-  background-color: #fff;
-  border: 1px solid #c2c8d5;
-  border-radius: 4px;
+  background-color: #A0CFFF; /* 浅蓝色背景 */
+  border: 2px solid #E6A23C; /* 橙色边框 */
+  border-radius: 10px; /* 更大的圆角 */
   text-align: center;
   cursor: pointer;
   display: flex;
@@ -60,6 +60,7 @@ defineProps({
 
 .node-text {
   font-size: 14px;
+  font-weight: bold; /* 加粗文字 */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -191,27 +191,33 @@ const initLogicFlow = async () => {
     
     // 使用直接的DOM元素引用而不是ID选择器
     // @ts-ignore - 忽略LogicFlow构造函数的类型错误
-    const logicFlow = new LogicFlow({
+  const logicFlow = new LogicFlow({
       container: lfContainer,
       width: finalWidth,
       height: finalHeight,
-      background: {
+    background: {
         backgroundColor: '#ffffff',
-      },
-      grid: {
-        size: 10,
-        visible: true,
-        type: 'dot',
-      },
-      keyboard: {
-        enabled: true,
-      },
+        backgroundImage: 'linear-gradient(#DCDFE6 1px, transparent 0), linear-gradient(90deg, #DCDFE6 1px, transparent 0)',
+        backgroundSize: '20px 20px',
+    },
+    grid: {
+      size: 20,
+      visible: true,
+      type: 'mesh',
+      config: {
+        color: '#DCDFE6',
+        thickness: 1,
+      }
+    },
+    keyboard: {
+      enabled: true,
+    },
       style: {
-        nodeText: {
-          overflowMode: 'ellipsis',
-          fontSize: 14,
-        },
-        edgeText: {
+    nodeText: {
+      overflowMode: 'ellipsis',
+      fontSize: 14,
+    },
+    edgeText: {
           overflowMode: 'ellipsis',
           fontSize: 14,
         },
@@ -219,10 +225,12 @@ const initLogicFlow = async () => {
           stroke: '#409EFF',
           fill: '#FFFFFF',
           r: 6,
+          strokeWidth: 2,
           hover: {
             stroke: '#409EFF',
-            fill: 'rgba(64, 158, 255, 0.2)',
+            fill: '#E6F7FF',
             r: 8,
+            strokeWidth: 3,
           },
           visibility: 'visible',
           display: 'block',
@@ -282,14 +290,14 @@ const initLogicFlow = async () => {
     
     // 设置画布主题
     setCanvasTheme(logicFlow);
-    
-    // 设置默认边类型
-    logicFlow.setDefaultEdgeType('bezier');
-    
-    // 注册节点和边
-    registerNodes(logicFlow);
-    registerEdges(logicFlow);
-    
+  
+  // 设置默认边类型
+  logicFlow.setDefaultEdgeType('bezier');
+  
+  // 注册节点和边
+  registerNodes(logicFlow);
+  registerEdges(logicFlow);
+  
     // 设置拖拽事件
     setupDragEvents(lfContainer, logicFlow);
     
@@ -305,7 +313,7 @@ const initLogicFlow = async () => {
     logicFlow.resize(finalWidth, finalHeight);
     
     console.log('LogicFlow初始化完成');
-  } catch (e) {
+    } catch (e) {
     console.error('初始化LogicFlow失败:', e);
     console.error('错误详情:', e instanceof Error ? e.message : String(e));
     
@@ -390,7 +398,7 @@ const renderInitialData = () => {
   };
   
   try {
-    lf.value.render(initData);
+  lf.value.render(initData);
     console.log('初始数据渲染成功');
   } catch (error) {
     console.error('初始数据渲染失败:', error);
@@ -860,7 +868,7 @@ const setupEventListeners = (lf: any) => {
         anchor.style.opacity = '1';
         anchor.style.pointerEvents = 'auto';
         anchor.style.cursor = 'crosshair';
-        anchor.setAttribute('r', '8');
+        anchor.setAttribute('r', '6'); // 缩小锚点大小
         anchor.setAttribute('stroke', '#409EFF');
         anchor.setAttribute('fill', '#FFFFFF');
         anchor.setAttribute('stroke-width', '2');
@@ -905,12 +913,10 @@ const setupEventListeners = (lf: any) => {
         const { x, y, width, height } = nodeModel;
         if (isNaN(x) || isNaN(y) || isNaN(width) || isNaN(height)) return;
         
-        // 定义锚点位置
+        // 定义锚点位置 - 只保留左右锚点
         const anchorPositions = [
           { x: x + width / 2, y, type: 'right' },
-          { x: x - width / 2, y, type: 'left' },
-          { x, y: y - height / 2, type: 'top' },
-          { x, y: y + height / 2, type: 'bottom' }
+          { x: x - width / 2, y, type: 'left' }
         ];
         
         // 获取节点的SVG组
@@ -923,7 +929,7 @@ const setupEventListeners = (lf: any) => {
           const anchor = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
           anchor.setAttribute('cx', pos.x.toString());
           anchor.setAttribute('cy', pos.y.toString());
-          anchor.setAttribute('r', '8');
+          anchor.setAttribute('r', '6'); // 缩小锚点大小
           anchor.setAttribute('fill', '#FFFFFF');
           anchor.setAttribute('stroke', '#409EFF');
           anchor.setAttribute('stroke-width', '2');
@@ -1216,7 +1222,7 @@ const addGlobalAnchorStyles = () => {
       stroke: #409EFF !important;
       fill: #FFFFFF !important;
       stroke-width: 2 !important;
-      r: 8 !important;
+      r: 6 !important;
       pointer-events: auto !important;
       cursor: crosshair !important;
     }
@@ -1225,7 +1231,7 @@ const addGlobalAnchorStyles = () => {
     circle.lf-anchor:hover,
     circle.lf-node-anchor:hover,
     circle.node-anchor-visible:hover {
-      r: 10 !important;
+      r: 8 !important;
       stroke: #409EFF !important;
       fill: #E6F7FF !important;
       stroke-width: 3 !important;
@@ -1282,7 +1288,7 @@ const addGlobalAnchorStyles = () => {
       stroke: #409EFF !important;
       fill: #FFFFFF !important;
       stroke-width: 2 !important;
-      r: 8 !important;
+      r: 6 !important;
     }
   `;
   
@@ -1300,7 +1306,7 @@ const addGlobalAnchorStyles = () => {
       anchor.style.opacity = '1';
       anchor.style.pointerEvents = 'auto';
       anchor.style.cursor = 'crosshair';
-      anchor.setAttribute('r', '8');
+      anchor.setAttribute('r', '6'); // 缩小锚点大小
       anchor.setAttribute('stroke', '#409EFF');
       anchor.setAttribute('fill', '#FFFFFF');
       anchor.setAttribute('stroke-width', '2');
@@ -1327,7 +1333,7 @@ onMounted(async () => {
     });
     
     // 立即初始化LogicFlow
-    initLogicFlow();
+  initLogicFlow();
   } else {
     console.error('容器元素未找到');
   }

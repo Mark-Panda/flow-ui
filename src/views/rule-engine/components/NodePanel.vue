@@ -173,7 +173,7 @@ const getDefaultProperties = (type: string, label: string) => {
 .node-panel {
   width: 200px;
   height: 100%;
-  background-color: #fff;
+  background-color: #f5f7fa;
   border-right: 1px solid #dcdfe6;
   display: flex;
   flex-direction: column;
@@ -185,43 +185,45 @@ const getDefaultProperties = (type: string, label: string) => {
     font-size: 16px;
     font-weight: bold;
     border-bottom: 1px solid #dcdfe6;
-    background-color: #f5f7fa;
-    color: #409eff;
+    background-color: #409eff;
+    color: white;
   }
   
   .node-list {
     flex: 1;
-    padding: 10px;
+    padding: 15px;
     overflow-y: auto;
     
     .node-item {
-      height: 40px;
+      height: 45px;
       display: flex;
       align-items: center;
-      padding: 0 10px;
-      margin-bottom: 10px;
-      border: 1px solid #dcdfe6;
-      border-radius: 4px;
+      padding: 0 12px;
+      margin-bottom: 15px;
+      border: 2px solid #dcdfe6;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.3s;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+      background-color: white;
       
       &:hover {
         border-color: #409eff;
         background-color: #ecf5ff;
-        transform: translateY(-2px);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 12px rgba(64, 158, 255, 0.2);
       }
       
       .node-icon {
-        width: 24px;
-        height: 24px;
+        width: 28px;
+        height: 28px;
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-right: 10px;
+        margin-right: 12px;
         
         .svg-icon {
-          font-size: 18px;
+          font-size: 20px;
           color: #409eff;
         }
       }
@@ -229,6 +231,7 @@ const getDefaultProperties = (type: string, label: string) => {
       .node-name {
         flex: 1;
         font-size: 14px;
+        font-weight: 500;
       }
     }
   }

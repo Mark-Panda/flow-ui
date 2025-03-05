@@ -85,26 +85,6 @@ export default function registerStart(lf: any) {
             edgeAddable: true,
             nodeAddable: false,
             className: 'node-anchor'
-          },
-          // 顶部连接点
-          {
-            x: safeX,
-            y: safeY - safeHeight / 2,
-            id: `${id}_top`,
-            type: 'top',
-            edgeAddable: true,
-            nodeAddable: false,
-            className: 'node-anchor'
-          },
-          // 底部连接点
-          {
-            x: safeX,
-            y: safeY + safeHeight / 2,
-            id: `${id}_bottom`,
-            type: 'bottom',
-            edgeAddable: true,
-            nodeAddable: false,
-            className: 'node-anchor'
           }
         ];
       }

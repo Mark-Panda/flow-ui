@@ -11,8 +11,8 @@ export default function registerBaseNode(lf: any) {
           stroke: '#FF0000',
           strokeWidth: 2,
         } : {
-          stroke: '#DCDFE6',
-          strokeWidth: 1,
+          stroke: '#E6A23C',
+          strokeWidth: 2,
         };
         
         // 确保x和y是有效数值
@@ -21,15 +21,16 @@ export default function registerBaseNode(lf: any) {
         const safeWidth = isNaN(width) ? 160 : width;
         const safeHeight = isNaN(height) ? 60 : height;
         
+        // 创建圆角矩形
         return h('rect', {
           ...style,
-          fill: '#FFFFFF',
-          width: safeWidth,
-          height: safeHeight,
           x: safeX - safeWidth / 2,
           y: safeY - safeHeight / 2,
-          rx: 4,
-          ry: 4,
+          width: safeWidth,
+          height: safeHeight,
+          rx: 10,
+          ry: 10,
+          fill: properties.type === 'start' ? '#A0CFFF' : '#FDF6EC',
         });
       }
       
@@ -154,12 +155,10 @@ export default function registerBaseNode(lf: any) {
       
       // 创建锚点元素
       createAnchors(x: number, y: number, width: number, height: number, id: string) {
-        // 定义锚点位置
+        // 定义锚点位置 - 只保留左右锚点
         const anchorPositions = [
           { x: x + width / 2, y: y, type: 'right' },
-          { x: x - width / 2, y: y, type: 'left' },
-          { x: x, y: y - height / 2, type: 'top' },
-          { x: x, y: y + height / 2, type: 'bottom' }
+          { x: x - width / 2, y: y, type: 'left' }
         ];
         
         // 创建锚点元素
@@ -167,7 +166,7 @@ export default function registerBaseNode(lf: any) {
           return h('circle', {
             cx: pos.x,
             cy: pos.y,
-            r: 8,
+            r: 6, // 缩小锚点大小
             fill: '#FFFFFF',
             stroke: '#409EFF',
             strokeWidth: 2,
@@ -198,12 +197,17 @@ export default function registerBaseNode(lf: any) {
       
       // 获取节点样式
       getNodeStyle() {
-        const style = super.getNodeStyle();
-        style.fill = '#fff';
-        style.stroke = '#dcdfe6';
-        style.strokeWidth = 1;
-        style.opacity = 1;
-        return style;
+        const { properties } = this;
+        
+        // 根据节点类型设置不同的填充色
+        const fillColor = this.type === 'start' ? '#A0CFFF' : '#FDF6EC';
+        
+        return {
+          fill: fillColor,
+          stroke: properties.frontend_status === '0' ? '#FF0000' : '#E6A23C',
+          strokeWidth: 2,
+          radius: 10, // 圆角半径
+        };
       }
       
       // 获取文本样式
@@ -215,71 +219,48 @@ export default function registerBaseNode(lf: any) {
       
       // 设置连接点
       getDefaultAnchor() {
-        const { id, x, y, width, height } = this;
+        const { x, y, width, height, id } = this;
         
-        // 确保x和y是有效数值
+        // 确保坐标有效
         const safeX = isNaN(x) ? 0 : x;
         const safeY = isNaN(y) ? 0 : y;
         const safeWidth = isNaN(width) ? 160 : width;
         const safeHeight = isNaN(height) ? 60 : height;
         
-        // 通用锚点配置
+        // 通用锚点属性
         const commonAnchorProps = {
-          edgeAddable: true,
-          nodeAddable: false,
-          className: 'node-anchor node-anchor-visible',
-          // 确保连接点始终可见
           isVisible: true,
           isShowAnchor: true,
           isSourceAnchor: true,
           isTargetAnchor: true,
-          showAnchor: true,
-          visible: true,
-          // 添加更多控制属性
-          disableRotate: false,
+          edgeAddable: true,
+          nodeAddable: false,
           style: {
             stroke: '#409EFF',
             fill: '#FFFFFF',
             strokeWidth: 2,
             r: 6,
-            visibility: 'visible',
+            opacity: 1,
             display: 'block',
-            opacity: 1
+            visibility: 'visible',
           }
         };
         
+        // 只返回左右锚点
         return [
-          // 右侧连接点
           {
+            ...commonAnchorProps,
             x: safeX + safeWidth / 2,
             y: safeY,
-            id: `${id}_right`,
             type: 'right',
-            ...commonAnchorProps
+            id: `${id}_right`,
           },
-          // 左侧连接点
           {
+            ...commonAnchorProps,
             x: safeX - safeWidth / 2,
             y: safeY,
-            id: `${id}_left`,
             type: 'left',
-            ...commonAnchorProps
-          },
-          // 顶部连接点
-          {
-            x: safeX,
-            y: safeY - safeHeight / 2,
-            id: `${id}_top`,
-            type: 'top',
-            ...commonAnchorProps
-          },
-          // 底部连接点
-          {
-            x: safeX,
-            y: safeY + safeHeight / 2,
-            id: `${id}_bottom`,
-            type: 'bottom',
-            ...commonAnchorProps
+            id: `${id}_left`,
           }
         ];
       }
@@ -301,7 +282,7 @@ export default function registerBaseNode(lf: any) {
           stroke: '#409EFF',
           fill: '#FFFFFF',
           strokeWidth: 2,
-          r: 8, // 增大锚点尺寸，使其更容易被点击
+          r: 6, // 缩小锚点尺寸
           opacity: 1,
           display: 'block',
           visibility: 'visible',
@@ -310,7 +291,7 @@ export default function registerBaseNode(lf: any) {
           hover: {
             stroke: '#409EFF',
             fill: '#E6F7FF',
-            r: 10,
+            r: 8, // 缩小悬停时的尺寸
             strokeWidth: 3,
           },
         };
