@@ -176,22 +176,25 @@ button:focus-visible {
 
 /* 增强连接点的可见性 */
 .lf-anchor {
-  r: 4px !important;
-  stroke: #409EFF !important;
-  stroke-width: 1px !important;
-  fill: #FFFFFF !important;
+  stroke: #C0C4CC;
+  stroke-width: 1px;
+  fill: white;
+  r: 2px; /* 进一步缩小锚点大小 */
+  cursor: crosshair;
 }
 
 .lf-anchor:hover {
-  r: 6px !important;
-  stroke: #409EFF !important;
-  fill: rgba(64, 158, 255, 0.2) !important;
+  stroke: #409EFF;
+  fill: rgba(64, 158, 255, 0.2);
+  r: 3px; /* 悬停时稍微变大，但仍然比原来小 */
 }
 
 /* LogicFlow节点选中状态 */
 .lf-node-selected {
-  outline: none !important;
-  filter: brightness(1.05) !important;
+  stroke: #409EFF !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: none !important; /* 确保没有虚线 */
+  fill: none !important; /* 确保没有填充 */
 }
 
 /* 微调选中节点的样式 */
@@ -203,9 +206,9 @@ button:focus-visible {
 
 /* 微调选中节点连接点的样式 */
 .lf-node-selected .lf-anchor {
-  fill: rgba(64, 158, 255, 0.2) !important;
-  stroke: #409EFF !important;
-  r: 5px !important;
+  fill: rgba(24, 144, 255, 0.2);
+  stroke: rgba(24, 144, 255, 0.5);
+  r: 3px; /* 保持一致的大小 */
 }
 
 /* 连线样式 */
@@ -347,7 +350,7 @@ button:focus-visible {
   stroke: #C0C4CC;
   stroke-width: 1px;
   fill: white;
-  r: 4px;
+  r: 2px; /* 进一步缩小锚点大小 */
   cursor: crosshair;
 }
 
@@ -355,7 +358,7 @@ button:focus-visible {
 .lf-anchor:hover {
   stroke: #409EFF;
   fill: rgba(64, 158, 255, 0.2);
-  r: 5px;
+  r: 3px; /* 悬停时稍微变大，但仍然比原来小 */
 }
 
 /* 禁用调整把手 */
@@ -413,7 +416,7 @@ button:focus-visible {
 .lf-node-selected .lf-anchor {
   fill: rgba(64, 158, 255, 0.2);
   stroke: #409EFF;
-  r: 5px;
+  r: 3px;
 }
 
 /* 节点之间的连接线样式 */
@@ -547,13 +550,14 @@ html, body, #app {
   stroke: #C0C4CC;
   stroke-width: 1px;
   fill: white;
-  r: 4px;
+  r: 2px; /* 进一步缩小锚点大小 */
   cursor: crosshair;
 }
 
 .lf-anchor:hover {
   stroke: #409EFF;
   fill: rgba(64, 158, 255, 0.2);
+  r: 3px; /* 悬停时稍微变大，但仍然比原来小 */
 }
 
 /* 隐藏活动边缘 */
@@ -580,7 +584,7 @@ html, body, #app {
   fill: transparent;
   stroke: transparent;
   stroke-width: 1;
-  r: 4;  /* 连接点半径 */
+  r: 2; /* 进一步缩小连接点半径 */
   transition: all 0.3s;
 }
 
@@ -588,30 +592,34 @@ html, body, #app {
   fill: #fff;
   stroke: #409eff;
   stroke-width: 1;
-  r: 6;  /* 悬停时稍微变大 */
+  r: 3; /* 悬停时稍微变大，但比原来小 */
 }
 
-/* 连线路径优化 */
-.lf-polyline-edge, .lf-line-edge, .lf-bezier-edge {
-  stroke-linecap: round;
-  stroke-linejoin: round;
+/* 选中节点样式 - 移除虚线框 */
+.lf-node-selected {
+  stroke: #409EFF !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: none !important; /* 确保没有虚线 */
+  fill: none !important; /* 确保没有填充 */
 }
 
-/* 修复边缘调整控制点的样式 */
-.lf-edge-adjust-point {
-  display: none !important;
+/* 选中节点的连接点样式 */
+.lf-node-selected .lf-anchor {
+  fill: rgba(24, 144, 255, 0.2);
+  stroke: rgba(24, 144, 255, 0.5);
+  r: 3px; /* 保持一致的大小 */
 }
 
-/* 确保节点边框效果 */
-.lf-node-not-allow {
-  cursor: not-allowed;
+/* 美化选中节点的样式 - 移除额外的阴影效果 */
+.lf-node-selected .node-container {
+  box-shadow: none;
 }
 
-/* 关闭选中节点的透明度变化 */
+/* 关闭选中节点的透明度变化和轮廓 */
 .lf-node-selected,
 .lf-node:hover {
   outline: none !important;
-  filter: brightness(1.05);
+  filter: none; /* 移除亮度变化 */
   box-shadow: none !important;
 }
 
@@ -639,7 +647,7 @@ html, body, #app {
 .lf-node-selected .lf-anchor {
   fill: rgba(24, 144, 255, 0.2);
   stroke: rgba(24, 144, 255, 0.5);
-  r: 4px;
+  r: 3px;
 }
 
 /* 美化选中节点的样式 */
@@ -666,4 +674,33 @@ html, body, #app {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 删除节点拖到画布后的虚线框 */
+.lf-drag-able {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* 删除节点拖动时的虚线框 */
+.lf-drag-node {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  background: none !important;
+}
+
+/* 删除节点拖动时的虚线框 */
+.lf-drag-node .lf-node-content {
+  outline: none !important;
+  box-shadow: none !important;
+  border: 2px solid #E6A23C !important;
+  background-color: #A0CFFF !important;
+}
+
+/* 完全隐藏节点拖动时的虚线框 */
+.lf-node-dnd-rect {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
 }

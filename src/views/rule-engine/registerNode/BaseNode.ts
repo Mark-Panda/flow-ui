@@ -282,29 +282,31 @@ export default function registerBaseNode(lf: any) {
           style: {
             stroke: '#409EFF',
             fill: '#FFFFFF',
-            strokeWidth: 2,
-            r: 6,
+            strokeWidth: 1, // 减小边框宽度
+            r: 3, // 减小锚点大小
             opacity: 1,
             display: 'block',
             visibility: 'visible',
           }
         };
         
-        // 只返回左右锚点
+        // 只返回左右锚点，位置调整到边框的中部
         return [
           {
             ...commonAnchorProps,
             x: safeX + safeWidth / 2,
-            y: safeY,
+            y: safeY, // 保持在中间高度
             type: 'right',
             id: `${id}_right`,
+            className: 'node-anchor'
           },
           {
             ...commonAnchorProps,
             x: safeX - safeWidth / 2,
-            y: safeY,
+            y: safeY, // 保持在中间高度
             type: 'left',
             id: `${id}_left`,
+            className: 'node-anchor'
           }
         ];
       }

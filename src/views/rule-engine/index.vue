@@ -38,7 +38,9 @@
         title="规则引擎DSL"
         width="60%"
       >
-        <pre class="dsl-preview">{{ JSON.stringify(dslData, null, 2) }}</pre>
+        <div class="dsl-preview-container">
+          <pre class="dsl-preview" v-html="formattedDSL"></pre>
+        </div>
         <template #footer>
           <span class="dialog-footer">
             <el-button @click="dslVisible = false">关闭</el-button>
@@ -79,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, nextTick } from 'vue';
+import { ref, onMounted, reactive, nextTick, computed } from 'vue';
 import LogicFlow from '@logicflow/core';
 import { Menu, Snapshot, MiniMap } from '@logicflow/extension';
 import { ElMessage } from 'element-plus';
@@ -125,6 +127,60 @@ let showLf = ref(false);
 let importVisible = ref(false);
 // 导入内容
 let importContent = ref('');
+
+// 格式化后的DSL数据
+const formattedDSL = computed(() => {
+  if (!dslData.value) return '';
+  try {
+    return formatJSON(JSON.stringify(dslData.value, null, 2));
+  } catch (e) {
+    console.error('DSL格式化错误:', e);
+    return JSON.stringify(dslData.value);
+  }
+});
+
+// 格式化JSON并添加语法高亮
+const formatJSON = (json: string) => {
+  if (!json) return '';
+  
+  // 替换JSON中的关键部分以添加HTML标签
+  return json
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+      let cls = 'json-value';
+      
+      // 判断匹配到的是什么类型
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+          // 键名
+          cls = 'json-key';
+          // 移除键名后的冒号
+          match = match.replace(/:$/, '');
+        } else {
+          // 字符串值
+          cls = 'json-string';
+        }
+      } else if (/true|false/.test(match)) {
+        // 布尔值
+        cls = 'json-boolean';
+      } else if (/null/.test(match)) {
+        // null值
+        cls = 'json-null';
+      } else if (/^-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?$/.test(match)) {
+        // 数字
+        cls = 'json-number';
+      }
+      
+      // 如果是键名，添加冒号
+      if (cls === 'json-key') {
+        return `<span class="${cls}">${match}</span>:`;
+      }
+      
+      return `<span class="${cls}">${match}</span>`;
+    });
+};
 
 // 初始化逻辑流
 const initLogicFlow = async () => {
@@ -1459,13 +1515,49 @@ onMounted(async () => {
   z-index: 2;
 }
 
+.dsl-preview-container {
+  position: relative;
+  max-height: 500px;
+  overflow: auto;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
 .dsl-preview {
   background-color: #f5f7fa;
   padding: 15px;
   border-radius: 4px;
-  max-height: 500px;
   overflow: auto;
   white-space: pre-wrap;
-  font-family: monospace;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  counter-reset: line;
+}
+
+.dsl-preview .json-key {
+  color: #0b6125;
+  font-weight: bold;
+}
+
+.dsl-preview .json-value {
+  color: #1a1aa6;
+}
+
+.dsl-preview .json-string {
+  color: #a31515;
+}
+
+.dsl-preview .json-number {
+  color: #098658;
+}
+
+.dsl-preview .json-boolean {
+  color: #0000ff;
+}
+
+.dsl-preview .json-null {
+  color: #0000ff;
 }
 </style> 

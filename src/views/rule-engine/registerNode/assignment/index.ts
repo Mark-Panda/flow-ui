@@ -151,7 +151,7 @@ export default function registerAssignment(lf: any) {
           // 右侧连接点
           {
             x: safeX + safeWidth / 2,
-            y: safeY,
+            y: safeY, // 保持在中部
             id: `${id}_right`,
             type: 'right',
             edgeAddable: true,
@@ -161,7 +161,7 @@ export default function registerAssignment(lf: any) {
           // 左侧连接点
           {
             x: safeX - safeWidth / 2,
-            y: safeY,
+            y: safeY, // 保持在中部
             id: `${id}_left`,
             type: 'left',
             edgeAddable: true,
